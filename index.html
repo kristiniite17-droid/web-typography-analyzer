@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Typography Analyzer ULTIMATE</title>
+
+<style>
+body { font-family: Arial; background:#f5f5f5; }
+.container { max-width:1000px; margin:auto; padding:20px; background:white; margin-top:40px; border-radius:10px; }
+
+input, button { width:100%; padding:10px; margin-top:10px; }
+button { background:black; color:white; cursor:pointer; }
+
+.analysis-box {
+    padding:15px;
+    margin:15px 0;
+    border-radius:8px;
+    color:white;
+}
+
+.analysis-box.good { background:linear-gradient(90deg,#28a745,#6fdc8c); }
+.analysis-box.needs { background:linear-gradient(90deg,#dc3545,#ff6b6b); }
+
+.explanation {
+    background:rgba(255,255,255,0.2);
+    padding:10px;
+    margin-top:10px;
+    border-radius:5px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>Typography Analyzer ULTIMATE</h1>
+
+<input id="urlInput" placeholder="https://example.com">
+<button onclick="analyze()">Analyze</button>
+
+<div id="stats"></div>
+<div id="result"></div>
+
+</div>
+
+<script>
+
+async function analyze(){
+    const url = document.getElementById("urlInput").value;
+    const resultDiv = document.getElementById("result");
+
+    resultDiv.innerHTML = "Loading...";
+
+    const response = await fetch("http://localhost:3000/analyze?url="+encodeURIComponent(url));
+    const data = await response.json();
+
+    let html="";
+    let total=0;
+    let bad=0;
+
+    data.pages.forEach(page=>{
+        html += `<h2>Page: ${page.url}</h2>`;
+
+        page.elements.forEach(el=>{
+            total++;
+
+            let status="good";
+            let problems=[];
+            let fixes=[];
+
+            if(parseFloat(el.fontSize)<14){
+                status="needs";
+                problems.push("Font size is too small (<14px)");
+                fixes.push("Increase font size to at least 14–16px");
+                bad++;
+            }
+
+            if(el.contrast < 4.5){
+                status="needs";
+                problems.push("Low contrast (WCAG fail)");
+                fixes.push("Increase contrast between text and background");
+                bad++;
+            }
+
+            if(parseFloat(el.lineHeight)<1.3){
+                status="needs";
+                problems.push("Line height too small");
+                fixes.push("Use line-height 1.4–1.6");
+                bad++;
+            }
+
+            html += `
+            <div class="analysis-box ${status}">
+                <b>Element:</b> ${el.tag}<br>
+                <b>Text:</b> "${el.text}"<br><br>
+
+                Font Size: ${el.fontSize}<br>
+                Line Height: ${el.lineHeight}<br>
+                Contrast: ${el.contrast}<br>
+
+                <div class="explanation">
+                    <b>Problems:</b> ${problems.join(", ") || "None"}<br>
+                    <b>Fix:</b> ${fixes.join(", ") || "None"}
+                </div>
+            </div>`;
+        });
+    });
+
+    const percentBad = Math.round((bad/total)*100);
+    const percentGood = 100 - percentBad;
+
+    document.getElementById("stats").innerHTML =
+    `<h2>Statistics</h2>
+    Good: ${percentGood}%<br>
+    Needs Improvement: ${percentBad}%`;
+
+    html += `<h2>Visual Highlight</h2>
+    <img src="http://localhost:3000/highlight.png" style="width:100%; border:2px solid black;">`;
+
+    resultDiv.innerHTML = html;
+}
+
+</script>
+
+</body>
+</html>
