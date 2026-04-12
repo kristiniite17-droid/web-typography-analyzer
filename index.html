@@ -52,7 +52,7 @@ async function analyze(){
 
     resultDiv.innerHTML = "Loading...";
 
-    const response = await fetch("http://localhost:3000/analyze?url="+encodeURIComponent(url));
+    const response = await fetch("https://kristiniite17-droid.github.io/web-typography-analyzer/="+encodeURIComponent(url));
     const data = await response.json();
 
     let html="";
