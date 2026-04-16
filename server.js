@@ -1,136 +1,139 @@
 const express = require("express");
 const puppeteer = require("puppeteer");
 const cors = require("cors");
+const PDFDocument = require("pdfkit");
+const fs = require("fs");
 
 const app = express();
 app.use(cors());
-app.use(express.static(__dirname));
 
 app.get("/", (req, res) => {
-    res.send("Ultimate Analyzer Running 🚀");
+    res.send("Advanced Analyzer Running 🚀");
 });
+
+function getSeverity(score) {
+    if (score < 50) return "critical";
+    if (score < 75) return "medium";
+    return "low";
+}
 
 app.get("/analyze", async (req, res) => {
     const url = req.query.url;
-
     if (!url) return res.json({ error: "No URL" });
 
-    try {
-        const browser = await puppeteer.launch({
-            headless: "new",
-            args: ["--no-sandbox", "--disable-setuid-sandbox"]
-        });
+    const browser = await puppeteer.launch({
+        headless: "new",
+        args: ["--no-sandbox", "--disable-setuid-sandbox"]
+    });
 
-        const page = await browser.newPage();
+    const page = await browser.newPage();
 
-        await page.goto(url, {
-            waitUntil: "networkidle2",
-            timeout: 30000
-        });
+    await page.goto(url, {
+        waitUntil: "networkidle2",
+        timeout: 30000
+    });
 
-        const result = await page.evaluate(() => {
+    const result = await page.evaluate(() => {
 
-            function getLuminance(r,g,b){
-                const a=[r,g,b].map(v=>{
-                    v/=255;
-                    return v<=0.03928 ? v/12.92 : Math.pow((v+0.055)/1.055,2.4);
-                });
-                return 0.2126*a[0]+0.7152*a[1]+0.0722*a[2];
+        const elements = document.querySelectorAll("p,h1,h2,h3,span,button,a");
+
+        let total = 0;
+        let good = 0;
+
+        const issues = [];
+
+        const data = Array.from(elements).map(el => {
+            total++;
+
+            const style = getComputedStyle(el);
+
+            let text = (el.innerText || "").trim().slice(0, 80);
+            if (!text) text = "[empty]";
+
+            const fontSize = parseFloat(style.fontSize);
+            const lineHeight = parseFloat(style.lineHeight);
+
+            let status = "good";
+            let problems = [];
+            let fix = [];
+
+            if (fontSize < 14) {
+                problems.push("Font too small");
+                fix.push("Increase to 14–18px");
+                status = "bad";
             }
 
-            function contrast(rgb1, rgb2){
-                const lum1 = getLuminance(...rgb1);
-                const lum2 = getLuminance(...rgb2);
-                return (Math.max(lum1,lum2)+0.05)/(Math.min(lum1,lum2)+0.05);
+            if (lineHeight < 1.3) {
+                problems.push("Line spacing too tight");
+                fix.push("Use 1.4–1.6");
+                status = "bad";
             }
 
-            function parseRGB(str){
-                const nums = str.match(/\d+/g);
-                return nums ? nums.map(Number) : [255,255,255];
+            if (status === "good") good++;
+
+            if (status === "bad") {
+                el.style.outline = "3px solid red";
+                el.style.backgroundColor = "rgba(255,0,0,0.1)";
             }
 
-            const elements = document.querySelectorAll("p,h1,h2,h3,span");
-
-            let total = 0;
-            let good = 0;
-
-            const data = Array.from(elements).map(el => {
-
-                total++;
-
-                const style = getComputedStyle(el);
-
-                let text = el.innerText || "";
-                text = text.replace(/\s+/g, " ").trim();
-                if (!text) text = "[No text]";
-                text = text.slice(0, 80);
-
-                const fontSize = parseFloat(style.fontSize);
-                const lineHeight = parseFloat(style.lineHeight);
-
-                const color = parseRGB(style.color);
-                const bg = parseRGB(style.backgroundColor);
-
-                const contrastValue = contrast(color, bg);
-
-                let problems = [];
-                let fixes = [];
-                let status = "good";
-
-                if (fontSize < 14) {
-                    problems.push("Font too small");
-                    fixes.push("Use 14–16px");
-                    status = "bad";
-                }
-
-                if (lineHeight < 1.3) {
-                    problems.push("Line height too small");
-                    fixes.push("Use 1.4–1.6");
-                    status = "bad";
-                }
-
-                if (contrastValue < 4.5) {
-                    problems.push("Low contrast");
-                    fixes.push("Increase contrast");
-                    status = "bad";
-                }
-
-                if (status === "good") good++;
-
-                if (status === "bad") {
-                    el.style.outline = "3px solid red";
-                    el.style.backgroundColor = "rgba(255,0,0,0.1)";
-                }
-
-                return {
-                    tag: el.tagName,
+            if (status === "bad") {
+                issues.push({
                     text,
-                    fontSize: style.fontSize,
-                    lineHeight: style.lineHeight,
-                    contrast: contrastValue.toFixed(2),
+                    tag: el.tagName,
                     problems,
-                    fixes,
-                    status
-                };
-            });
+                    fix
+                });
+            }
 
-            const score = Math.round((good / total) * 100);
-
-            return { data, score };
+            return {
+                tag: el.tagName,
+                text,
+                fontSize: style.fontSize,
+                lineHeight: style.lineHeight,
+                status
+            };
         });
 
-        await page.screenshot({
-            path: "highlight.png",
-            fullPage: true
-        });
+        const score = Math.round((good / total) * 100);
 
-        await browser.close();
+        return { data, score, issues };
+    });
 
-        res.json(result);
+    const screenshotPath = "site.png";
 
-    } catch (err) {
-        res.json({ error: err.message });
-    }
+    await page.screenshot({
+        path: screenshotPath,
+        fullPage: true
+    });
+
+    await browser.close();
+
+    res.json({
+        url,
+        score: result.score,
+        severity: getSeverity(result.score),
+        issues: result.issues.slice(0, 10),
+        screenshot: "/image"
+    });
 });
 
-app.listen(3000);
+// 📸 screenshot endpoint
+app.get("/image", (req, res) => {
+    res.sendFile(__dirname + "/site.png");
+});
+
+// 📄 PDF REPORT
+app.get("/report", async (req, res) => {
+    const url = req.query.url;
+
+    const doc = new PDFDocument();
+    res.setHeader("Content-Type", "application/pdf");
+
+    doc.text("Typography Analysis Report");
+    doc.text("URL: " + url);
+    doc.text("Score generated from system analysis.");
+    doc.pipe(res);
+    doc.end();
+});
+
+app.listen(3000, () => console.log("Running"));
