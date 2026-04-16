@@ -2,39 +2,74 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Typography Analyzer</title>
+<title>Ultimate Typography Analyzer</title>
+
+<style>
+body { font-family: Arial; background:#f5f5f5; }
+.container { max-width:1000px; margin:auto; padding:20px; background:white; margin-top:40px; border-radius:10px; }
+
+input, button { width:100%; padding:10px; margin-top:10px; }
+button { background:black; color:white; cursor:pointer; }
+
+.good { background:green; color:white; padding:10px; margin:10px 0; }
+.bad { background:red; color:white; padding:10px; margin:10px 0; }
+
+.score {
+    font-size:30px;
+    margin:20px 0;
+}
+</style>
 </head>
 
 <body>
 
-<h1>Typography Analyzer</h1>
+<div class="container">
+
+<h1>Ultimate Typography Analyzer 🚀</h1>
 
 <input id="urlInput" placeholder="https://example.com">
 <button onclick="analyze()">Analyze</button>
 
 <div id="result"></div>
 
+</div>
+
 <script>
+
 async function analyze(){
     const url = document.getElementById("urlInput").value;
+    const resultDiv = document.getElementById("result");
 
-    const res = await fetch("https://web-typography-analyzer-production.up.railway.app/analyze?url=" + encodeURIComponent(url));
+    resultDiv.innerHTML = "Loading...";
+
+    const res = await fetch("https://web-typography-analyzer-production.up.railway.app/analyze?url="+encodeURIComponent(url));
     const data = await res.json();
 
-    let html = "";
+    if(data.error){
+        resultDiv.innerHTML = data.error;
+        return;
+    }
 
-    data.elements.forEach(el=>{
+    let html = `<div class="score">Score: ${data.score}/100</div>`;
+
+    data.data.forEach(el=>{
         html += `
-        <div>
-        <b>${el.tag}</b> - "${el.text}"<br>
-        Font: ${el.fontFamily}<br>
-        Size: ${el.fontSize}<br>
-        Line height: ${el.lineHeight}
-        </div><hr>`;
+        <div class="${el.status}">
+            <b>${el.tag}</b><br>
+            "${el.text}"<br><br>
+            Size: ${el.fontSize}<br>
+            Contrast: ${el.contrast}<br><br>
+            Problems: ${el.problems.join(", ") || "None"}<br>
+            Fix: ${el.fixes.join(", ") || "None"}
+        </div>`;
     });
 
-    document.getElementById("result").innerHTML = html;
+    html += `<h2>Highlight</h2>
+    <img src="https://web-typography-analyzer-production.up.railway.app/highlight.png" width="100%">`;
+
+    resultDiv.innerHTML = html;
 }
+
 </script>
 
 </body>
