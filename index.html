@@ -18,7 +18,7 @@
 async function analyze(){
     const url = document.getElementById("urlInput").value;
 
-    const res = await fetch("https://TAVS-RAILWAY-LINK/analyze?url="+encodeURIComponent(url));
+    const res = await fetch("https://web-typography-analyzer-production.up.railway.app/analyze?url=" + encodeURIComponent(url));
     const data = await res.json();
 
     let html = "";
