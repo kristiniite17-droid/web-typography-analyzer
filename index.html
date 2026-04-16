@@ -25,13 +25,13 @@ async function analyze(){
     let html = "";
 
     data.elements.forEach(el=>{
-        html += `<div>
+        html += `
+        <div>
         <b>${el.tag}</b> - "${el.text}"<br>
-        Size: ${el.fontSize} | Contrast: ${el.contrast}<br>
+        Font size: ${el.fontSize}<br>
+        Line height: ${el.lineHeight}
         </div><hr>`;
     });
-
-    html += `<img src="https://web-typography-analyzer.onrender.com/highlight.png" width="100%">`;
 
     document.getElementById("result").innerHTML = html;
 }
