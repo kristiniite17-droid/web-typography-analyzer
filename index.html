@@ -1,42 +1,77 @@
-<!DOCTYPE html>
-<html>
-<head>
-<meta charset="UTF-8">
-<title>Typography Analyzer</title>
-</head>
+const express = require("express");
+const puppeteer = require("puppeteer-core");
+const cors = require("cors");
 
-<body>
+const app = express();
+app.use(cors());
+app.use(express.static(__dirname));
 
-<h1>Typography Analyzer</h1>
+// TEST
+app.get("/", (req, res) => {
+    res.send("Server is working 🚀");
+});
 
-<input id="urlInput" placeholder="https://example.com">
-<button onclick="analyze()">Analyze</button>
+// ANALYZE
+app.get("/analyze", async (req, res) => {
+    const url = req.query.url;
 
-<div id="result"></div>
+    if (!url) {
+        return res.status(400).json({ error: "No URL provided" });
+    }
 
-<script>
+    let browser;
 
-async function analyze(){
-    const url = document.getElementById("urlInput").value;
+    try {
+        browser = await puppeteer.launch({
+            headless: true,
+            executablePath: process.env.CHROME_PATH || undefined,
+            args: ["--no-sandbox", "--disable-setuid-sandbox"]
+        });
 
-    const res = await fetch("https://web-typography-analyzer.onrender.com/analyze?url="+encodeURIComponent(url));
-    const data = await res.json();
+    } catch (err) {
+        return res.status(500).json({
+            error: "Browser failed to start. Chrome not found on server."
+        });
+    }
 
-    let html = "";
+    try {
+        const page = await browser.newPage();
 
-    data.elements.forEach(el=>{
-        html += `
-        <div>
-        <b>${el.tag}</b> - "${el.text}"<br>
-        Font size: ${el.fontSize}<br>
-        Line height: ${el.lineHeight}
-        </div><hr>`;
-    });
+        await page.goto(url, {
+            waitUntil: "domcontentloaded",
+            timeout: 30000
+        });
 
-    document.getElementById("result").innerHTML = html;
-}
+        const data = await page.evaluate(() => {
+            const elements = document.querySelectorAll("p,h1,h2,h3,span");
 
-</script>
+            return Array.from(elements).map(el => {
+                const style = getComputedStyle(el);
 
-</body>
-</html>
+                let text = el.innerText || "";
+                text = text.replace(/\s+/g, " ").trim();
+                if (!text) text = "[No text]";
+                text = text.slice(0, 60);
+
+                return {
+                    tag: el.tagName,
+                    text,
+                    fontSize: style.fontSize,
+                    lineHeight: style.lineHeight
+                };
+            });
+        });
+
+        await browser.close();
+
+        res.json({ elements: data.slice(0, 20) });
+
+    } catch (err) {
+        if (browser) await browser.close();
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.listen(3000, () => {
+    console.log("Server running on port 3000");
+});
