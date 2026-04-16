@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Typography Analyzer</title>
+</head>
+
+<body>
+
+<h1>Typography Analyzer</h1>
+
+<input id="urlInput" placeholder="https://example.com">
+<button onclick="analyze()">Analyze</button>
+
+<div id="result"></div>
+
+<script>
+async function analyze(){
+    const url = document.getElementById("urlInput").value;
+
+    const res = await fetch("https://TAVS-RAILWAY-LINK/analyze?url="+encodeURIComponent(url));
+    const data = await res.json();
+
+    let html = "";
+
+    data.elements.forEach(el=>{
+        html += `
+        <div>
+        <b>${el.tag}</b> - "${el.text}"<br>
+        Font: ${el.fontFamily}<br>
+        Size: ${el.fontSize}<br>
+        Line height: ${el.lineHeight}
+        </div><hr>`;
+    });
+
+    document.getElementById("result").innerHTML = html;
+}
+</script>
+
+</body>
+</html>
