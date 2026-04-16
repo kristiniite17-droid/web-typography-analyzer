@@ -2,68 +2,45 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Advanced Analyzer</title>
-
-<style>
-body { font-family: Arial; background:#111; color:white; }
-.container { max-width:900px; margin:auto; padding:20px; }
-
-input, button { width:100%; padding:10px; margin-top:10px; }
-
-.card { padding:10px; margin:10px 0; border-radius:8px; }
-
-.good { background:green; }
-.bad { background:red; }
-
-.score { font-size:40px; margin:20px 0; }
-</style>
+<title>Typography Analyzer</title>
 </head>
 
 <body>
 
-<div class="container">
-
-<h1>Advanced Typography Analyzer 🚀</h1>
+<h1>Typography Analyzer</h1>
 
 <input id="url" placeholder="https://example.com">
-<button onclick="run()">Analyze</button>
+<button onclick="analyze()">Analyze</button>
 
 <div id="out"></div>
 
-</div>
-
 <script>
 
-async function run(){
+async function analyze(){
     const url = document.getElementById("url").value;
-    const out = document.getElementById("out");
-
-    out.innerHTML = "Analyzing...";
 
     const res = await fetch("https://web-typography-analyzer-production.up.railway.app/analyze?url=" + encodeURIComponent(url));
     const data = await res.json();
 
-    let html = `
-    <div class="score">
-    SCORE: ${data.score}/100<br>
-    SEVERITY: ${data.severity}
-    </div>
-    `;
+    let html = "";
 
-    data.issues.forEach(i=>{
-        html += `
-        <div class="card bad">
-            <b>${i.tag}</b><br>
-            ${i.text}<br>
-            Issues: ${i.problems.join(", ")}<br>
-            Fix: ${i.fix.join(", ")}
-        </div>`;
-    });
+    if(data.error){
+        html = "<b>Error:</b> " + data.error;
+    } else {
+        html = `<h2>Score: ${data.score}/100</h2>`;
 
-    html += `<h3>Screenshot</h3>
-    <img src="https://web-typography-analyzer-production.up.railway.app/image" width="100%">`;
+        data.result.forEach(el => {
+            html += `
+            <div>
+                <b>${el.tag}</b><br>
+                "${el.text}"<br>
+                Font size: ${el.fontSize}<br>
+                Status: ${el.status}
+            </div><hr>`;
+        });
+    }
 
-    out.innerHTML = html;
+    document.getElementById("out").innerHTML = html;
 }
 
 </script>
