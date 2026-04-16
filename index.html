@@ -52,7 +52,7 @@ async function analyze(){
 
     resultDiv.innerHTML = "Loading...";
 
-    const response = await fetch("https://web-typography-analyzer.onrender.com");
+    const response = await fetch("https://web-typography-analyzer.onrender.com/analyze?url=" + encodeURIComponent(url));
     const data = await response.json();
 
     let html="";
