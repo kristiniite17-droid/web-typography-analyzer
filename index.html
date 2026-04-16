@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Typography Analyzer ULTIMATE</title>
+<title>Typography Analyzer</title>
 
 <style>
 body { font-family: Arial; background:#f5f5f5; }
@@ -34,7 +34,7 @@ button { background:black; color:white; cursor:pointer; }
 
 <div class="container">
 
-<h1>Typography Analyzer ULTIMATE</h1>
+<h1>Typography Analyzer</h1>
 
 <input id="urlInput" placeholder="https://example.com">
 <button onclick="analyze()">Analyze</button>
@@ -52,7 +52,7 @@ async function analyze(){
 
     resultDiv.innerHTML = "Loading...";
 
-    const response = await fetch("https://web-typography-analyzer.onrender.com/analyze?url="+encodeURIComponent(url))
+    const response = await fetch("http://localhost:3000/analyze?url="+encodeURIComponent(url));
     const data = await response.json();
 
     let html="";
@@ -72,14 +72,14 @@ async function analyze(){
             if(parseFloat(el.fontSize)<14){
                 status="needs";
                 problems.push("Font size is too small (<14px)");
-                fixes.push("Increase font size to at least 14–16px");
+                fixes.push("Increase font size to 14–16px");
                 bad++;
             }
 
             if(el.contrast < 4.5){
                 status="needs";
                 problems.push("Low contrast (WCAG fail)");
-                fixes.push("Increase contrast between text and background");
+                fixes.push("Increase contrast");
                 bad++;
             }
 
@@ -107,7 +107,7 @@ async function analyze(){
         });
     });
 
-    const percentBad = Math.round((bad/total)*100);
+    const percentBad = total ? Math.round((bad/total)*100) : 0;
     const percentGood = 100 - percentBad;
 
     document.getElementById("stats").innerHTML =
