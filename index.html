@@ -18,15 +18,8 @@ button { background:black; color:white; cursor:pointer; }
     color:white;
 }
 
-.analysis-box.good { background:linear-gradient(90deg,#28a745,#6fdc8c); }
-.analysis-box.needs { background:linear-gradient(90deg,#dc3545,#ff6b6b); }
-
-.explanation {
-    background:rgba(255,255,255,0.2);
-    padding:10px;
-    margin-top:10px;
-    border-radius:5px;
-}
+.analysis-box.good { background:green; }
+.analysis-box.needs { background:red; }
 </style>
 </head>
 
@@ -39,7 +32,6 @@ button { background:black; color:white; cursor:pointer; }
 <input id="urlInput" placeholder="https://example.com">
 <button onclick="analyze()">Analyze</button>
 
-<div id="stats"></div>
 <div id="result"></div>
 
 </div>
@@ -52,71 +44,47 @@ async function analyze(){
 
     resultDiv.innerHTML = "Loading...";
 
-    const response = await fetch("https://web-typography-analyzer.onrender.com/analyze?url=" + encodeURIComponent(url));
+    const response = await fetch("https://web-typography-analyzer.onrender.com/analyze?url="+encodeURIComponent(url));
     const data = await response.json();
 
     let html="";
-    let total=0;
-    let bad=0;
 
-    data.pages.forEach(page=>{
-        html += `<h2>Page: ${page.url}</h2>`;
+    data.elements.forEach(el=>{
+        let status="good";
+        let problems=[];
+        let fixes=[];
 
-        page.elements.forEach(el=>{
-            total++;
+        if(parseFloat(el.fontSize)<14){
+            status="needs";
+            problems.push("Font too small");
+            fixes.push("Use 14–16px");
+        }
 
-            let status="good";
-            let problems=[];
-            let fixes=[];
+        if(el.contrast < 4.5){
+            status="needs";
+            problems.push("Low contrast");
+            fixes.push("Improve contrast");
+        }
 
-            if(parseFloat(el.fontSize)<14){
-                status="needs";
-                problems.push("Font size is too small (<14px)");
-                fixes.push("Increase font size to 14–16px");
-                bad++;
-            }
+        if(parseFloat(el.lineHeight)<1.3){
+            status="needs";
+            problems.push("Line height too small");
+            fixes.push("Use 1.4–1.6");
+        }
 
-            if(el.contrast < 4.5){
-                status="needs";
-                problems.push("Low contrast (WCAG fail)");
-                fixes.push("Increase contrast");
-                bad++;
-            }
-
-            if(parseFloat(el.lineHeight)<1.3){
-                status="needs";
-                problems.push("Line height too small");
-                fixes.push("Use line-height 1.4–1.6");
-                bad++;
-            }
-
-            html += `
-            <div class="analysis-box ${status}">
-                <b>Element:</b> ${el.tag}<br>
-                <b>Text:</b> "${el.text}"<br><br>
-
-                Font Size: ${el.fontSize}<br>
-                Line Height: ${el.lineHeight}<br>
-                Contrast: ${el.contrast}<br>
-
-                <div class="explanation">
-                    <b>Problems:</b> ${problems.join(", ") || "None"}<br>
-                    <b>Fix:</b> ${fixes.join(", ") || "None"}
-                </div>
-            </div>`;
-        });
+        html += `
+        <div class="analysis-box ${status}">
+            <b>${el.tag}</b><br>
+            "${el.text}"<br><br>
+            Size: ${el.fontSize}<br>
+            Contrast: ${el.contrast}<br><br>
+            Problems: ${problems.join(", ") || "None"}<br>
+            Fix: ${fixes.join(", ") || "None"}
+        </div>`;
     });
 
-    const percentBad = total ? Math.round((bad/total)*100) : 0;
-    const percentGood = 100 - percentBad;
-
-    document.getElementById("stats").innerHTML =
-    `<h2>Statistics</h2>
-    Good: ${percentGood}%<br>
-    Needs Improvement: ${percentBad}%`;
-
-    html += `<h2>Visual Highlight</h2>
-    <img src="http://localhost:3000/highlight.png" style="width:100%; border:2px solid black;">`;
+    html += `<h2>Highlight</h2>
+    <img src="https://web-typography-analyzer.onrender.com/highlight.png" width="100%">`;
 
     resultDiv.innerHTML = html;
 }
