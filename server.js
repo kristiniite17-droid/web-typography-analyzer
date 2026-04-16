@@ -6,7 +6,7 @@ const app = express();
 app.use(cors());
 
 app.get("/", (req, res) => {
-    res.send("Advanced Analyzer Running 🚀");
+    res.send("Typography Analyzer Running 🚀");
 });
 
 app.get("/analyze", async (req, res) => {
@@ -31,13 +31,13 @@ app.get("/analyze", async (req, res) => {
             timeout: 30000
         });
 
-        const result = await page.evaluate(() => {
+        const data = await page.evaluate(() => {
             const elements = document.querySelectorAll("p,h1,h2,h3,span");
 
             let total = 0;
             let good = 0;
 
-            const data = Array.from(elements).map(el => {
+            const result = Array.from(elements).map(el => {
                 total++;
 
                 const style = getComputedStyle(el);
@@ -49,11 +49,9 @@ app.get("/analyze", async (req, res) => {
                 const fontSize = parseFloat(style.fontSize);
 
                 let status = "good";
-                let problems = [];
 
                 if (fontSize < 14) {
                     status = "bad";
-                    problems.push("Font too small");
                 } else {
                     good++;
                 }
@@ -61,30 +59,30 @@ app.get("/analyze", async (req, res) => {
                 return {
                     tag: el.tagName,
                     text,
-                    fontSize,
-                    status,
-                    problems
+                    fontSize: style.fontSize,
+                    status
                 };
             });
 
             const score = Math.round((good / total) * 100);
 
-            return { score, data };
+            return { score, result };
         });
 
         await browser.close();
 
-        return res.json(result);
+        res.json(data);
 
     } catch (err) {
         if (browser) await browser.close();
 
-        return res.status(500).json({
+        res.status(500).json({
             error: err.message
         });
     }
 });
 
-app.listen(process.env.PORT || 3000, () => {
-    console.log("Server running");
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+    console.log("Server running on port", PORT);
 });
