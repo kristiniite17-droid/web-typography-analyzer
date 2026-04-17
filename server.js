@@ -1,13 +1,18 @@
 const express = require("express");
 const puppeteer = require("puppeteer");
 const cors = require("cors");
+const OpenAI = require("openai");
 
 const app = express();
 app.use(cors());
 app.use(express.static(__dirname));
 
+const openai = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY
+});
+
 app.get("/", (req, res) => {
-    res.send("Ultimate Analyzer Running 🚀");
+    res.send("AI Analyzer Running 🚀");
 });
 
 app.get("/analyze", async (req, res) => {
@@ -28,187 +33,57 @@ app.get("/analyze", async (req, res) => {
             timeout: 30000
         });
 
-        const result = await page.evaluate(() => {
+        const raw = await page.evaluate(() => {
 
             function describeElement(el) {
-                if (el.innerText && el.innerText.trim().length > 0) {
+                if (el.innerText && el.innerText.trim()) {
                     return el.innerText.trim().slice(0, 100);
                 }
-
-                if (el.tagName === "IMG") {
-                    return `Image: alt="${el.alt || "no alt"}"`;
-                }
-
-                if (el.tagName === "A") {
-                    return `Link: ${el.href}`;
-                }
-
-                if (el.id) {
-                    return `ID: ${el.id}`;
-                }
-
-                if (el.className) {
-                    return `Class: ${el.className}`;
-                }
-
-                return `<${el.tagName}> element`;
-            }
-
-            function aiExplain(problem) {
-                const explanations = {
-                    "Very low contrast": "Text is hard to read and may be inaccessible for users with visual impairments.",
-                    "Small text": "Small text reduces readability, especially on mobile devices.",
-                    "Extremely small text": "Text is too small and may be unreadable for most users.",
-                    "Tight line height": "Lines are too close together, making text harder to scan.",
-                    "Line too long": "Long lines reduce readability and make it harder to track text.",
-                    "Centered paragraph": "Centered text is harder to read for long paragraphs.",
-                    "Low spacing": "Elements are too close, reducing visual clarity."
-                };
-
-                return explanations[problem] || "Typography issue affecting readability.";
-            }
-
-            function getLuminance(r,g,b){
-                const a=[r,g,b].map(v=>{
-                    v/=255;
-                    return v<=0.03928 ? v/12.92 : Math.pow((v+0.055)/1.055,2.4);
-                });
-                return 0.2126*a[0]+0.7152*a[1]+0.0722*a[2];
-            }
-
-            function contrast(rgb1, rgb2){
-                const lum1 = getLuminance(...rgb1);
-                const lum2 = getLuminance(...rgb2);
-                return (Math.max(lum1,lum2)+0.05)/(Math.min(lum1,lum2)+0.05);
-            }
-
-            function parseRGB(str){
-                const nums = str.match(/\d+/g);
-                return nums ? nums.map(Number) : [255,255,255];
+                if (el.alt) return `Image alt: ${el.alt}`;
+                if (el.href) return `Link: ${el.href}`;
+                if (el.id) return `ID: ${el.id}`;
+                if (el.className) return `Class: ${el.className}`;
+                return `<${el.tagName}>`;
             }
 
             const elements = document.querySelectorAll("p,h1,h2,h3,span,img,a");
 
-            let total = 0;
-            let good = 0;
-            let warnings = 0;
-            let critical = 0;
-
-            const data = Array.from(elements).map(el => {
-
-                total++;
-
+            return Array.from(elements).map(el => {
                 const style = getComputedStyle(el);
-
-                const text = describeElement(el);
-
-                const fontSize = parseFloat(style.fontSize);
-                const lineHeight = parseFloat(style.lineHeight);
-                const alignment = style.textAlign;
-                const marginBottom = parseFloat(style.marginBottom);
-
-                const color = parseRGB(style.color);
-                const bg = parseRGB(style.backgroundColor);
-
-                const contrastValue = contrast(color, bg);
-                const lineLength = text.length;
-
-                let problems = [];
-                let fixes = [];
-                let explanations = [];
-                let level = "good";
-
-                // CRITICAL
-                if (contrastValue < 3) {
-                    problems.push("Very low contrast");
-                    fixes.push("Increase contrast immediately");
-                    explanations.push(aiExplain("Very low contrast"));
-                    level = "critical";
-                }
-
-                if (fontSize < 12) {
-                    problems.push("Extremely small text");
-                    fixes.push("Use minimum 14px");
-                    explanations.push(aiExplain("Extremely small text"));
-                    level = "critical";
-                }
-
-                // WARNING
-                if (fontSize < 14) {
-                    problems.push("Small text");
-                    fixes.push("Use 14–16px");
-                    explanations.push(aiExplain("Small text"));
-                    if (level !== "critical") level = "warning";
-                }
-
-                if (lineHeight < fontSize * 1.3) {
-                    problems.push("Tight line height");
-                    fixes.push("Use 1.4–1.6");
-                    explanations.push(aiExplain("Tight line height"));
-                    if (level !== "critical") level = "warning";
-                }
-
-                if (lineLength > 90) {
-                    problems.push("Line too long");
-                    fixes.push("Limit to 50–75 chars");
-                    explanations.push(aiExplain("Line too long"));
-                    if (level !== "critical") level = "warning";
-                }
-
-                if (alignment === "center" && el.tagName === "P") {
-                    problems.push("Centered paragraph");
-                    fixes.push("Use left alignment");
-                    explanations.push(aiExplain("Centered paragraph"));
-                    if (level !== "critical") level = "warning";
-                }
-
-                if (marginBottom < 8) {
-                    problems.push("Low spacing");
-                    fixes.push("Add vertical spacing");
-                    explanations.push(aiExplain("Low spacing"));
-                    if (level !== "critical") level = "warning";
-                }
-
-                if (level === "good") good++;
-                if (level === "warning") warnings++;
-                if (level === "critical") critical++;
-
-                if (level !== "good") {
-                    el.style.outline = level === "critical" ? "3px solid red" : "3px solid orange";
-                }
 
                 return {
                     tag: el.tagName,
-                    text,
+                    text: describeElement(el),
                     fontSize: style.fontSize,
                     lineHeight: style.lineHeight,
-                    alignment,
-                    contrast: contrastValue.toFixed(2),
-                    lineLength,
-                    level,
-                    problems,
-                    fixes,
-                    explanations
+                    alignment: style.textAlign,
+                    color: style.color,
+                    background: style.backgroundColor
                 };
             });
-
-            const score = Math.round((good / total) * 100);
-
-            return {
-                data,
-                score,
-                stats: { good, warnings, critical }
-            };
         });
 
-        await page.screenshot({
-            path: "highlight.png",
-            fullPage: true
+        // 🧠 CHATGPT ANALYSIS
+        const aiResponse = await openai.chat.completions.create({
+            model: "gpt-5.3",
+            messages: [
+                {
+                    role: "system",
+                    content: "You are a UX and typography expert. Analyze elements and give short, clear recommendations."
+                },
+                {
+                    role: "user",
+                    content: JSON.stringify(raw.slice(0, 20)) // limit for cost
+                }
+            ]
         });
 
         await browser.close();
 
-        res.json(result);
+        res.json({
+            elements: raw,
+            ai: aiResponse.choices[0].message.content
+        });
 
     } catch (err) {
         res.json({ error: err.message });
