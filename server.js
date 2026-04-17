@@ -53,6 +53,8 @@ app.get("/analyze", async (req, res) => {
 
             let total = 0;
             let good = 0;
+            let warnings = 0;
+            let critical = 0;
 
             const data = Array.from(elements).map(el => {
 
@@ -68,81 +70,70 @@ app.get("/analyze", async (req, res) => {
                 const fontSize = parseFloat(style.fontSize);
                 const lineHeight = parseFloat(style.lineHeight);
                 const alignment = style.textAlign;
-
                 const marginBottom = parseFloat(style.marginBottom);
 
                 const color = parseRGB(style.color);
                 const bg = parseRGB(style.backgroundColor);
 
                 const contrastValue = contrast(color, bg);
-
                 const lineLength = text.length;
 
                 let problems = [];
                 let fixes = [];
-                let status = "good";
+                let level = "good";
 
-                // FONT SIZE
+                // 🔴 CRITICAL
+                if (contrastValue < 3) {
+                    problems.push("Very low contrast");
+                    fixes.push("Increase contrast immediately");
+                    level = "critical";
+                }
+
+                if (fontSize < 12) {
+                    problems.push("Extremely small text");
+                    fixes.push("Use minimum 14px");
+                    level = "critical";
+                }
+
+                // 🟡 WARNING
                 if (fontSize < 14) {
-                    problems.push("Font too small");
-                    fixes.push("Use at least 14–16px");
-                    status = "bad";
+                    problems.push("Small text");
+                    fixes.push("Use 14–16px");
+                    if (level !== "critical") level = "warning";
                 }
 
-                // LINE HEIGHT
                 if (lineHeight < fontSize * 1.3) {
-                    problems.push("Line height too tight");
-                    fixes.push("Use 1.4–1.6 line-height");
-                    status = "bad";
+                    problems.push("Tight line height");
+                    fixes.push("Use 1.4–1.6");
+                    if (level !== "critical") level = "warning";
                 }
 
-                // CONTRAST
-                if (contrastValue < 4.5) {
-                    problems.push("Low contrast");
-                    fixes.push("Increase contrast (WCAG ≥ 4.5)");
-                    status = "bad";
-                }
-
-                // ALIGNMENT
-                if (alignment === "center" && el.tagName === "P") {
-                    problems.push("Centered paragraph text");
-                    fixes.push("Use left alignment");
-                    status = "bad";
-                }
-
-                // LINE LENGTH
                 if (lineLength > 90) {
                     problems.push("Line too long");
-                    fixes.push("Limit to 50–75 characters");
-                    status = "bad";
+                    fixes.push("Limit to 50–75 chars");
+                    if (level !== "critical") level = "warning";
                 }
 
-                // SPACING
+                if (alignment === "center" && el.tagName === "P") {
+                    problems.push("Centered paragraph");
+                    fixes.push("Use left alignment");
+                    if (level !== "critical") level = "warning";
+                }
+
                 if (marginBottom < 8) {
-                    problems.push("Too little vertical spacing");
-                    fixes.push("Add margin-bottom (16–24px)");
-                    status = "bad";
+                    problems.push("Low spacing");
+                    fixes.push("Add vertical spacing");
+                    if (level !== "critical") level = "warning";
                 }
 
-                // COLOR CONSISTENCY
-                if (style.color.includes("rgb(0, 0, 255)")) {
-                    problems.push("Default blue color");
-                    fixes.push("Use consistent color palette");
-                    status = "bad";
-                }
+                // stats
+                if (level === "good") good++;
+                if (level === "warning") warnings++;
+                if (level === "critical") critical++;
 
-                // HIERARCHY
-                if (el.tagName === "H1" && fontSize < 24) {
-                    problems.push("Weak heading hierarchy");
-                    fixes.push("Increase H1 size");
-                    status = "bad";
-                }
-
-                if (status === "good") good++;
-
-                if (status === "bad") {
-                    el.style.outline = "3px solid red";
-                    el.style.backgroundColor = "rgba(255,0,0,0.1)";
+                // highlight
+                if (level !== "good") {
+                    el.style.outline = level === "critical" ? "3px solid red" : "3px solid orange";
                 }
 
                 return {
@@ -153,16 +144,19 @@ app.get("/analyze", async (req, res) => {
                     alignment,
                     contrast: contrastValue.toFixed(2),
                     lineLength,
-                    spacing: marginBottom,
+                    level,
                     problems,
-                    fixes,
-                    status
+                    fixes
                 };
             });
 
             const score = Math.round((good / total) * 100);
 
-            return { data, score };
+            return {
+                data,
+                score,
+                stats: { good, warnings, critical }
+            };
         });
 
         await page.screenshot({
