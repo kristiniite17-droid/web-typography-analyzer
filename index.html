@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>AI Typography Analyzer</title>
+<title>Typography Analyzer</title>
 
 <style>
 body { font-family: Arial; background:#f5f5f5; }
@@ -11,15 +11,11 @@ body { font-family: Arial; background:#f5f5f5; }
 input, button { width:100%; padding:10px; margin-top:10px; }
 button { background:black; color:white; cursor:pointer; }
 
-.element { background:#eee; padding:10px; margin:10px 0; }
+.good { background:green; color:white; padding:10px; margin:10px 0; }
+.warning { background:orange; color:black; padding:10px; margin:10px 0; }
+.critical { background:red; color:white; padding:10px; margin:10px 0; }
 
-.ai {
-    background:black;
-    color:#00ff88;
-    padding:15px;
-    margin-top:20px;
-    white-space:pre-wrap;
-}
+.score { font-size:30px; margin:20px 0; }
 </style>
 </head>
 
@@ -27,10 +23,11 @@ button { background:black; color:white; cursor:pointer; }
 
 <div class="container">
 
-<h1>AI Typography Analyzer 🤖</h1>
+<h1>Typography Analyzer 🚀</h1>
 
 <input id="urlInput" placeholder="https://example.com">
 <button onclick="analyze()">Analyze</button>
+<button onclick="downloadPDF()">Download PDF Report</button>
 
 <div id="result"></div>
 
@@ -52,26 +49,38 @@ async function analyze(){
         return;
     }
 
-    let html = "<h2>Elements</h2>";
+    let html = `
+    <div class="score">Score: ${data.score}/100</div>
+    <p>Good: ${data.stats.good}</p>
+    <p>Warnings: ${data.stats.warnings}</p>
+    <p>Critical: ${data.stats.critical}</p>
+    `;
 
-    data.elements.slice(0,20).forEach(el=>{
+    data.data.forEach(el=>{
         html += `
-        <div class="element">
+        <div class="${el.level}">
             <b>${el.tag}</b><br>
-            ${el.text}<br>
-            Size: ${el.fontSize} | Line: ${el.lineHeight}
+            "${el.text}"<br><br>
+
+            Size: ${el.fontSize}<br>
+            Line height: ${el.lineHeight}<br>
+            Alignment: ${el.alignment}<br>
+            Contrast: ${el.contrast}<br>
+            Line length: ${el.lineLength}<br><br>
+
+            <b>Problems:</b> ${el.problems.join(", ") || "None"}<br>
+            <b>Fix:</b> ${el.fixes.join(", ") || "None"}
         </div>`;
     });
 
-    html += `
-    <h2>🤖 AI Analysis</h2>
-    <div class="ai">${data.ai}</div>
-    `;
-
-    html += `<h2>Screenshot</h2>
+    html += `<h2>Highlight</h2>
     <img src="https://web-typography-analyzer-production.up.railway.app/highlight.png" width="100%">`;
 
     resultDiv.innerHTML = html;
+}
+
+function downloadPDF() {
+    window.print();
 }
 
 </script>
