@@ -30,6 +30,44 @@ app.get("/analyze", async (req, res) => {
 
         const result = await page.evaluate(() => {
 
+            function describeElement(el) {
+                if (el.innerText && el.innerText.trim().length > 0) {
+                    return el.innerText.trim().slice(0, 100);
+                }
+
+                if (el.tagName === "IMG") {
+                    return `Image: alt="${el.alt || "no alt"}"`;
+                }
+
+                if (el.tagName === "A") {
+                    return `Link: ${el.href}`;
+                }
+
+                if (el.id) {
+                    return `ID: ${el.id}`;
+                }
+
+                if (el.className) {
+                    return `Class: ${el.className}`;
+                }
+
+                return `<${el.tagName}> element`;
+            }
+
+            function aiExplain(problem) {
+                const explanations = {
+                    "Very low contrast": "Text is hard to read and may be inaccessible for users with visual impairments.",
+                    "Small text": "Small text reduces readability, especially on mobile devices.",
+                    "Extremely small text": "Text is too small and may be unreadable for most users.",
+                    "Tight line height": "Lines are too close together, making text harder to scan.",
+                    "Line too long": "Long lines reduce readability and make it harder to track text.",
+                    "Centered paragraph": "Centered text is harder to read for long paragraphs.",
+                    "Low spacing": "Elements are too close, reducing visual clarity."
+                };
+
+                return explanations[problem] || "Typography issue affecting readability.";
+            }
+
             function getLuminance(r,g,b){
                 const a=[r,g,b].map(v=>{
                     v/=255;
@@ -49,7 +87,7 @@ app.get("/analyze", async (req, res) => {
                 return nums ? nums.map(Number) : [255,255,255];
             }
 
-            const elements = document.querySelectorAll("p,h1,h2,h3,span");
+            const elements = document.querySelectorAll("p,h1,h2,h3,span,img,a");
 
             let total = 0;
             let good = 0;
@@ -62,10 +100,7 @@ app.get("/analyze", async (req, res) => {
 
                 const style = getComputedStyle(el);
 
-                let text = el.innerText || "";
-                text = text.replace(/\s+/g, " ").trim();
-                if (!text) text = "[No text]";
-                text = text.slice(0, 100);
+                const text = describeElement(el);
 
                 const fontSize = parseFloat(style.fontSize);
                 const lineHeight = parseFloat(style.lineHeight);
@@ -80,58 +115,64 @@ app.get("/analyze", async (req, res) => {
 
                 let problems = [];
                 let fixes = [];
+                let explanations = [];
                 let level = "good";
 
-                // 🔴 CRITICAL
+                // CRITICAL
                 if (contrastValue < 3) {
                     problems.push("Very low contrast");
                     fixes.push("Increase contrast immediately");
+                    explanations.push(aiExplain("Very low contrast"));
                     level = "critical";
                 }
 
                 if (fontSize < 12) {
                     problems.push("Extremely small text");
                     fixes.push("Use minimum 14px");
+                    explanations.push(aiExplain("Extremely small text"));
                     level = "critical";
                 }
 
-                // 🟡 WARNING
+                // WARNING
                 if (fontSize < 14) {
                     problems.push("Small text");
                     fixes.push("Use 14–16px");
+                    explanations.push(aiExplain("Small text"));
                     if (level !== "critical") level = "warning";
                 }
 
                 if (lineHeight < fontSize * 1.3) {
                     problems.push("Tight line height");
                     fixes.push("Use 1.4–1.6");
+                    explanations.push(aiExplain("Tight line height"));
                     if (level !== "critical") level = "warning";
                 }
 
                 if (lineLength > 90) {
                     problems.push("Line too long");
                     fixes.push("Limit to 50–75 chars");
+                    explanations.push(aiExplain("Line too long"));
                     if (level !== "critical") level = "warning";
                 }
 
                 if (alignment === "center" && el.tagName === "P") {
                     problems.push("Centered paragraph");
                     fixes.push("Use left alignment");
+                    explanations.push(aiExplain("Centered paragraph"));
                     if (level !== "critical") level = "warning";
                 }
 
                 if (marginBottom < 8) {
                     problems.push("Low spacing");
                     fixes.push("Add vertical spacing");
+                    explanations.push(aiExplain("Low spacing"));
                     if (level !== "critical") level = "warning";
                 }
 
-                // stats
                 if (level === "good") good++;
                 if (level === "warning") warnings++;
                 if (level === "critical") critical++;
 
-                // highlight
                 if (level !== "good") {
                     el.style.outline = level === "critical" ? "3px solid red" : "3px solid orange";
                 }
@@ -146,7 +187,8 @@ app.get("/analyze", async (req, res) => {
                     lineLength,
                     level,
                     problems,
-                    fixes
+                    fixes,
+                    explanations
                 };
             });
 
