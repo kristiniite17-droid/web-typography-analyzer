@@ -13,7 +13,7 @@ app.get("/", (req, res) => {
 app.get("/analyze", async (req, res) => {
     const url = req.query.url;
 
-    if (!url) return res.json({ error: "No URL" });
+    if (!url) return res.json({ error: "No URL provided" });
 
     try {
         const browser = await puppeteer.launch({
@@ -63,35 +63,78 @@ app.get("/analyze", async (req, res) => {
                 let text = el.innerText || "";
                 text = text.replace(/\s+/g, " ").trim();
                 if (!text) text = "[No text]";
-                text = text.slice(0, 80);
+                text = text.slice(0, 100);
 
                 const fontSize = parseFloat(style.fontSize);
                 const lineHeight = parseFloat(style.lineHeight);
+                const alignment = style.textAlign;
+
+                const marginBottom = parseFloat(style.marginBottom);
 
                 const color = parseRGB(style.color);
                 const bg = parseRGB(style.backgroundColor);
 
                 const contrastValue = contrast(color, bg);
 
+                const lineLength = text.length;
+
                 let problems = [];
                 let fixes = [];
                 let status = "good";
 
+                // FONT SIZE
                 if (fontSize < 14) {
                     problems.push("Font too small");
-                    fixes.push("Use 14–16px");
+                    fixes.push("Use at least 14–16px");
                     status = "bad";
                 }
 
-                if (lineHeight < 1.3) {
-                    problems.push("Line height too small");
-                    fixes.push("Use 1.4–1.6");
+                // LINE HEIGHT
+                if (lineHeight < fontSize * 1.3) {
+                    problems.push("Line height too tight");
+                    fixes.push("Use 1.4–1.6 line-height");
                     status = "bad";
                 }
 
+                // CONTRAST
                 if (contrastValue < 4.5) {
                     problems.push("Low contrast");
-                    fixes.push("Increase contrast");
+                    fixes.push("Increase contrast (WCAG ≥ 4.5)");
+                    status = "bad";
+                }
+
+                // ALIGNMENT
+                if (alignment === "center" && el.tagName === "P") {
+                    problems.push("Centered paragraph text");
+                    fixes.push("Use left alignment");
+                    status = "bad";
+                }
+
+                // LINE LENGTH
+                if (lineLength > 90) {
+                    problems.push("Line too long");
+                    fixes.push("Limit to 50–75 characters");
+                    status = "bad";
+                }
+
+                // SPACING
+                if (marginBottom < 8) {
+                    problems.push("Too little vertical spacing");
+                    fixes.push("Add margin-bottom (16–24px)");
+                    status = "bad";
+                }
+
+                // COLOR CONSISTENCY
+                if (style.color.includes("rgb(0, 0, 255)")) {
+                    problems.push("Default blue color");
+                    fixes.push("Use consistent color palette");
+                    status = "bad";
+                }
+
+                // HIERARCHY
+                if (el.tagName === "H1" && fontSize < 24) {
+                    problems.push("Weak heading hierarchy");
+                    fixes.push("Increase H1 size");
                     status = "bad";
                 }
 
@@ -107,7 +150,10 @@ app.get("/analyze", async (req, res) => {
                     text,
                     fontSize: style.fontSize,
                     lineHeight: style.lineHeight,
+                    alignment,
                     contrast: contrastValue.toFixed(2),
+                    lineLength,
+                    spacing: marginBottom,
                     problems,
                     fixes,
                     status
