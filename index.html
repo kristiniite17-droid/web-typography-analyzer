@@ -69,7 +69,9 @@ async function analyze(){
             Line length: ${el.lineLength}<br><br>
 
             <b>Problems:</b> ${el.problems.join(", ") || "None"}<br>
-            <b>Fix:</b> ${el.fixes.join(", ") || "None"}
+            <b>Fix:</b> ${el.fixes.join(", ") || "None"}<br>
+            <b>Why it matters:</b><br>
+            ${el.explanations.map(e => "• " + e).join("<br>")}
         </div>`;
     });
 
