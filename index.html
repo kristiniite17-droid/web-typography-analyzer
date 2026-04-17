@@ -25,7 +25,7 @@ button { background:black; color:white; cursor:pointer; }
 
 <div class="container">
 
-<h1>Ultimate Typography Analyzer</h1>
+<h1>Ultimate Typography Analyzer 🚀</h1>
 
 <input id="urlInput" placeholder="https://example.com">
 <button onclick="analyze()">Analyze</button>
@@ -57,10 +57,16 @@ async function analyze(){
         <div class="${el.status}">
             <b>${el.tag}</b><br>
             "${el.text}"<br><br>
+
             Size: ${el.fontSize}<br>
-            Contrast: ${el.contrast}<br><br>
-            Problems: ${el.problems.join(", ") || "None"}<br>
-            Fix: ${el.fixes.join(", ") || "None"}
+            Line height: ${el.lineHeight}<br>
+            Alignment: ${el.alignment}<br>
+            Contrast: ${el.contrast}<br>
+            Line length: ${el.lineLength}<br>
+            Spacing: ${el.spacing}px<br><br>
+
+            <b>Problems:</b> ${el.problems.join(", ") || "None"}<br>
+            <b>Fix:</b> ${el.fixes.join(", ") || "None"}
         </div>`;
     });
 
