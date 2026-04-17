@@ -12,7 +12,7 @@ const openai = new OpenAI({
 });
 
 app.get("/", (req, res) => {
-    res.send("AI Analyzer Running 🚀");
+    res.send("AI Analyzer Running");
 });
 
 app.get("/analyze", async (req, res) => {
@@ -62,10 +62,9 @@ app.get("/analyze", async (req, res) => {
                 };
             });
         });
-
-        // 🧠 CHATGPT ANALYSIS
+        
         const aiResponse = await openai.chat.completions.create({
-            model: "gpt-5.3",
+            model: "gpt-4o-mini",
             messages: [
                 {
                     role: "system",
