@@ -1,10 +1,17 @@
 const express = require("express");
 const puppeteer = require("puppeteer");
 const cors = require("cors");
+const fs = require("fs");
+const path = require("path");
 
 const app = express();
 app.use(cors());
 app.use(express.static(__dirname));
+
+const previewsDir = path.join(__dirname, "previews");
+if (!fs.existsSync(previewsDir)) {
+  fs.mkdirSync(previewsDir);
+}
 
 app.get("/", (req, res) => {
   res.send("Typography Analyzer is running 🚀");
@@ -12,14 +19,15 @@ app.get("/", (req, res) => {
 
 app.get("/analyze", async (req, res) => {
   const url = req.query.url;
-
-  if (!url) {
-    return res.json({ error: "No URL provided." });
-  }
+  if (!url) return res.json({ error: "No URL provided." });
 
   let browser;
 
   try {
+    fs.readdirSync(previewsDir).forEach(file => {
+      fs.unlinkSync(path.join(previewsDir, file));
+    });
+
     browser = await puppeteer.launch({
       headless: "new",
       args: ["--no-sandbox", "--disable-setuid-sandbox"]
@@ -42,7 +50,7 @@ app.get("/analyze", async (req, res) => {
       }
 
       function getLuminance(r, g, b) {
-        const a = [r, g, b].map((v) => {
+        const a = [r, g, b].map(v => {
           v /= 255;
           return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
         });
@@ -57,21 +65,14 @@ app.get("/analyze", async (req, res) => {
       }
 
       function isTransparentColor(value) {
-        return (
-          !value ||
-          value === "transparent" ||
-          value === "rgba(0, 0, 0, 0)" ||
-          value === "rgba(0,0,0,0)"
-        );
+        return !value || value === "transparent" || value === "rgba(0, 0, 0, 0)";
       }
 
       function getEffectiveBackground(el) {
         let node = el;
         while (node && node !== document.documentElement) {
           const bg = getComputedStyle(node).backgroundColor;
-          if (!isTransparentColor(bg)) {
-            return bg;
-          }
+          if (!isTransparentColor(bg)) return bg;
           node = node.parentElement;
         }
         return "rgb(255,255,255)";
@@ -93,57 +94,20 @@ app.get("/analyze", async (req, res) => {
         if (el.tagName === "A") {
           const aria = normalizeText(el.getAttribute("aria-label") || "");
           const title = normalizeText(el.getAttribute("title") || "");
-          const href = el.href || "";
           if (aria) return `Link: ${aria}`;
           if (title) return `Link: ${title}`;
-          return href ? `Link: ${href}` : "Link element";
+          return el.href ? `Link: ${el.href}` : "Link element";
         }
-
-        const aria = normalizeText(el.getAttribute("aria-label") || "");
-        if (aria) return aria;
 
         if (el.id) return `ID: ${el.id}`;
-        if (typeof el.className === "string" && el.className.trim()) {
-          return `Class: ${el.className.trim()}`;
-        }
+        if (typeof el.className === "string" && el.className.trim()) return `Class: ${el.className.trim()}`;
 
         return `<${el.tagName.toLowerCase()}> element`;
       }
 
-      function isVisible(style, rect) {
-        if (style.display === "none") return false;
-        if (style.visibility === "hidden") return false;
-        if (Number(style.opacity) === 0) return false;
-        if (rect.width < 8 || rect.height < 8) return false;
-        return true;
-      }
-
-      function isMeaningful(el, style, text) {
-        const tag = el.tagName;
-        const textLen = text.length;
-
-        if (["SCRIPT", "STYLE", "NOSCRIPT", "SVG", "PATH"].includes(tag)) return false;
-        if (style.position === "fixed" && textLen < 8) return false;
-
-        if (["H1", "H2", "H3", "H4", "H5", "H6", "P", "LI", "BLOCKQUOTE"].includes(tag)) {
-          return true;
-        }
-
-        if (tag === "A" && textLen >= 4) return true;
-        if ((tag === "SPAN" || tag === "DIV") && textLen >= 20) return true;
-        if (tag === "IMG" && normalizeText(el.getAttribute("alt") || "").length > 0) return true;
-
-        return false;
-      }
-
       function getNumericLineHeight(style, fontSize) {
-        if (!style.lineHeight || style.lineHeight === "normal") {
-          return fontSize * 1.2;
-        }
-
-        if (style.lineHeight.endsWith("px")) {
-          return parseFloat(style.lineHeight);
-        }
+        if (!style.lineHeight || style.lineHeight === "normal") return fontSize * 1.2;
+        if (style.lineHeight.endsWith("px")) return parseFloat(style.lineHeight);
 
         const numeric = parseFloat(style.lineHeight);
         if (!Number.isNaN(numeric)) {
@@ -156,75 +120,75 @@ app.get("/analyze", async (req, res) => {
 
       function estimateCharactersPerLine(text, rectWidth, fontSize) {
         const avgCharWidth = fontSize * 0.52;
-        if (!rectWidth || !avgCharWidth) return text.length;
         return Math.round(rectWidth / avgCharWidth);
       }
 
-      const selector = [
-        "h1", "h2", "h3", "h4", "h5", "h6",
-        "p", "li", "blockquote", "a", "span", "div", "img"
-      ].join(",");
+      function isVisible(style, rect) {
+        return style.display !== "none" &&
+          style.visibility !== "hidden" &&
+          Number(style.opacity) !== 0 &&
+          rect.width >= 8 &&
+          rect.height >= 8;
+      }
 
+      function isMeaningful(el, text) {
+        const tag = el.tagName;
+        const len = text.length;
+
+        if (["H1", "H2", "H3", "H4", "H5", "H6", "P", "LI", "BLOCKQUOTE"].includes(tag)) return true;
+        if (tag === "A" && len >= 4) return true;
+        if ((tag === "SPAN" || tag === "DIV") && len >= 20) return true;
+        if (tag === "IMG" && normalizeText(el.getAttribute("alt") || "").length > 0) return true;
+
+        return false;
+      }
+
+      const selector = "h1,h2,h3,h4,h5,h6,p,li,blockquote,a,span,div,img";
       const nodes = Array.from(document.querySelectorAll(selector));
-      const headingSizes = [];
       const collected = [];
 
-      for (const el of nodes) {
+      nodes.forEach((el, index) => {
         const style = getComputedStyle(el);
         const rect = el.getBoundingClientRect();
-        const text = normalizeText(el.innerText || el.textContent || "");
+        const rawText = normalizeText(el.innerText || el.textContent || "");
 
-        if (!isVisible(style, rect)) continue;
-        if (!isMeaningful(el, style, text)) continue;
+        if (!isVisible(style, rect)) return;
+        if (!isMeaningful(el, rawText)) return;
 
         const fontSize = parseFloat(style.fontSize);
-        if (Number.isNaN(fontSize) || fontSize <= 0) continue;
+        if (!fontSize || fontSize <= 0) return;
 
-        const lineHeightPx = getNumericLineHeight(style, fontSize);
+        const id = `analyzed-element-${index}`;
+        el.setAttribute("data-analyzer-id", id);
+
+        const lineHeight = getNumericLineHeight(style, fontSize);
         const bg = getEffectiveBackground(el);
         const contrastValue = contrast(parseRGB(style.color), parseRGB(bg));
 
-        const marginBottom = parseFloat(style.marginBottom) || 0;
-        const marginTop = parseFloat(style.marginTop) || 0;
-        const paddingBottom = parseFloat(style.paddingBottom) || 0;
-        const paddingTop = parseFloat(style.paddingTop) || 0;
-
-        const widthPx = rect.width;
-        const charsPerLine = estimateCharactersPerLine(text || describeElement(el), widthPx, fontSize);
-
         const item = {
+          id,
           tag: el.tagName,
           text: describeElement(el),
           fontSize: Number(fontSize.toFixed(2)),
-          lineHeight: Number(lineHeightPx.toFixed(2)),
+          lineHeight: Number(lineHeight.toFixed(2)),
           alignment: style.textAlign,
           contrast: contrastValue ? Number(contrastValue.toFixed(2)) : null,
-          widthPx: Number(widthPx.toFixed(0)),
-          charsPerLine,
-          marginBottom,
-          marginTop,
-          paddingBottom,
-          paddingTop,
+          widthPx: Number(rect.width.toFixed(0)),
+          heightPx: Number(rect.height.toFixed(0)),
+          charsPerLine: estimateCharactersPerLine(rawText || describeElement(el), rect.width, fontSize),
+          marginBottom: parseFloat(style.marginBottom) || 0,
           problems: [],
           fixes: [],
+          details: [],
           level: "good"
         };
 
-        if (/^H[1-6]$/.test(el.tagName)) {
-          headingSizes.push({
-            tag: el.tagName,
-            size: fontSize
-          });
-        }
-
         collected.push({ el, item });
-      }
+      });
 
       function setLevel(item, newLevel) {
         const order = { good: 0, warning: 1, critical: 2 };
-        if (order[newLevel] > order[item.level]) {
-          item.level = newLevel;
-        }
+        if (order[newLevel] > order[item.level]) item.level = newLevel;
       }
 
       for (const { el, item } of collected) {
@@ -234,95 +198,58 @@ app.get("/analyze", async (req, res) => {
         if (["P", "LI", "BLOCKQUOTE", "A", "SPAN", "DIV"].includes(tag) && item.fontSize < 14) {
           item.problems.push("Font size is too small.");
           item.fixes.push("Increase the base text size to at least 14–16 px.");
+          item.details.push("Small text can reduce readability, especially on mobile screens and for users with weaker vision.");
           setLevel(item, item.fontSize < 12 ? "critical" : "warning");
         }
 
         if (["P", "LI", "BLOCKQUOTE"].includes(tag) && lhRatio < 1.35) {
           item.problems.push("Line height is too tight.");
           item.fixes.push("Use a line-height of approximately 1.4–1.6.");
+          item.details.push("Tight line spacing makes it harder for users to move from one line to the next.");
           setLevel(item, "warning");
         }
 
         if (item.contrast !== null && item.contrast < 4.5) {
           item.problems.push("Insufficient contrast between text and background.");
           item.fixes.push("Increase contrast to comply with WCAG accessibility guidance.");
+          item.details.push("Low contrast makes text harder to read and can create accessibility problems.");
           setLevel(item, item.contrast < 3 ? "critical" : "warning");
         }
 
         if (tag === "P" && item.alignment === "center") {
           item.problems.push("Centered paragraph text reduces readability.");
           item.fixes.push("Use left-aligned text for longer body paragraphs.");
+          item.details.push("Centered long text has an uneven starting point for each line, which slows down reading.");
           setLevel(item, "warning");
         }
 
         if (["P", "LI", "BLOCKQUOTE"].includes(tag) && item.charsPerLine > 90) {
           item.problems.push("Line length is too long.");
           item.fixes.push("Reduce text width to keep lines around 50–75 characters.");
+          item.details.push("Long lines make it harder for the eye to return to the next line accurately.");
           setLevel(item, "warning");
         }
 
-        if (
-          ["P", "LI", "BLOCKQUOTE", "H1", "H2", "H3"].includes(tag) &&
-          item.marginBottom < 8 &&
-          item.paddingBottom < 4
-        ) {
+        if (["P", "LI", "BLOCKQUOTE", "H1", "H2", "H3"].includes(tag) && item.marginBottom < 8) {
           item.problems.push("Vertical spacing below the element is too small.");
           item.fixes.push("Increase spacing between text blocks, for example with 12–24 px bottom margin.");
+          item.details.push("Insufficient vertical spacing makes content feel visually crowded.");
           setLevel(item, "warning");
         }
 
         if (tag === "H1" && item.fontSize < 28) {
           item.problems.push("The H1 heading is too small.");
           item.fixes.push("Increase H1 size to create a stronger visual hierarchy.");
-          setLevel(item, "warning");
-        }
-
-        if (tag === "H2" && item.fontSize < 22) {
-          item.problems.push("The H2 heading is too small.");
-          item.fixes.push("Increase H2 size so it clearly differs from body text.");
+          item.details.push("The main heading should clearly stand out from body text and secondary headings.");
           setLevel(item, "warning");
         }
 
         if (item.level !== "good") {
-          el.style.outline = item.level === "critical" ? "3px solid red" : "3px solid orange";
-          el.style.outlineOffset = "2px";
-          if (item.level === "critical") {
-            el.style.backgroundColor = "rgba(255,0,0,0.08)";
-          } else {
-            el.style.backgroundColor = "rgba(255,165,0,0.08)";
-          }
-        }
-      }
-
-      const sizeMap = {};
-      for (const h of headingSizes) {
-        if (!sizeMap[h.tag]) sizeMap[h.tag] = [];
-        sizeMap[h.tag].push(h.size);
-      }
-
-      const avg = (arr) => arr && arr.length
-        ? arr.reduce((a, b) => a + b, 0) / arr.length
-        : null;
-
-      const h1Avg = avg(sizeMap.H1);
-      const h2Avg = avg(sizeMap.H2);
-      const h3Avg = avg(sizeMap.H3);
-
-      const hierarchyWarnings = [];
-      if (h1Avg && h2Avg && h2Avg >= h1Avg) {
-        hierarchyWarnings.push("H2 headings are not smaller than H1 headings.");
-      }
-      if (h2Avg && h3Avg && h3Avg >= h2Avg) {
-        hierarchyWarnings.push("H3 headings are not smaller than H2 headings.");
-      }
-
-      if (hierarchyWarnings.length) {
-        for (const entry of collected) {
-          if (["H1", "H2", "H3"].includes(entry.item.tag)) {
-            entry.item.problems.push(...hierarchyWarnings);
-            entry.item.fixes.push("Review heading size hierarchy across the page.");
-            setLevel(entry.item, "warning");
-          }
+          el.style.outline = item.level === "critical" ? "4px solid red" : "4px solid orange";
+          el.style.outlineOffset = "3px";
+          el.style.backgroundColor = item.level === "critical"
+            ? "rgba(255,0,0,0.10)"
+            : "rgba(255,165,0,0.12)";
         }
       }
 
@@ -336,16 +263,36 @@ app.get("/analyze", async (req, res) => {
       };
 
       const score = stats.total
-        ? Math.max(
-            0,
-            Math.round(
-              ((stats.good * 1 + stats.warnings * 0.5 + stats.critical * 0) / stats.total) * 100
-            )
-          )
+        ? Math.round(((stats.good + stats.warnings * 0.5) / stats.total) * 100)
         : 0;
 
       return { data: finalData, stats, score };
     });
+
+    for (const item of result.data.filter(i => i.level !== "good").slice(0, 20)) {
+      try {
+        const elementHandle = await page.$(`[data-analyzer-id="${item.id}"]`);
+        if (elementHandle) {
+          const box = await elementHandle.boundingBox();
+          if (box) {
+            const clip = {
+              x: Math.max(box.x - 20, 0),
+              y: Math.max(box.y - 20, 0),
+              width: Math.min(box.width + 40, 1400),
+              height: Math.min(box.height + 40, 800)
+            };
+
+            const fileName = `${item.id}.png`;
+            await page.screenshot({
+              path: path.join(previewsDir, fileName),
+              clip
+            });
+
+            item.preview = `/previews/${fileName}`;
+          }
+        }
+      } catch (_) {}
+    }
 
     await page.screenshot({
       path: "highlight.png",
@@ -354,11 +301,10 @@ app.get("/analyze", async (req, res) => {
 
     await browser.close();
     res.json(result);
+
   } catch (err) {
     if (browser) {
-      try {
-        await browser.close();
-      } catch (_) {}
+      try { await browser.close(); } catch (_) {}
     }
     res.json({ error: err.message });
   }
