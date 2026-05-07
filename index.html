@@ -17,9 +17,7 @@
     --dark: #111827;
 }
 
-* {
-    box-sizing: border-box;
-}
+* { box-sizing: border-box; }
 
 body {
     margin: 0;
@@ -82,18 +80,14 @@ button {
     font-size: 16px;
 }
 
-button:hover {
-    background: #374151;
-}
+button:hover { background: #374151; }
 
 .secondary-btn {
     margin-top: 12px;
     background: #4b5563;
 }
 
-.score-card {
-    text-align: center;
-}
+.score-card { text-align: center; }
 
 .score-number {
     font-size: 56px;
@@ -101,9 +95,7 @@ button:hover {
     margin: 10px 0;
 }
 
-.score-label {
-    color: var(--muted);
-}
+.score-label { color: var(--muted); }
 
 .cards {
     display: grid;
@@ -117,6 +109,17 @@ button:hover {
     border: 1px solid var(--border);
     border-radius: 14px;
     padding: 18px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.stat-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 18px rgba(0,0,0,0.08);
+}
+
+.stat-card.active {
+    outline: 3px solid #111827;
 }
 
 .stat-card h3 {
@@ -156,9 +159,11 @@ button:hover {
     font-weight: bold;
 }
 
-.result-body {
-    padding: 18px;
-}
+.result-body { padding: 18px; }
+
+.good .result-header { border-left: 6px solid var(--good); }
+.warning .result-header { border-left: 6px solid var(--warning); }
+.critical .result-header { border-left: 6px solid var(--critical); }
 
 .badge {
     padding: 6px 12px;
@@ -168,32 +173,9 @@ button:hover {
     text-transform: uppercase;
 }
 
-.good .result-header {
-    border-left: 6px solid var(--good);
-}
-
-.warning .result-header {
-    border-left: 6px solid var(--warning);
-}
-
-.critical .result-header {
-    border-left: 6px solid var(--critical);
-}
-
-.badge.good {
-    background: #dcfce7;
-    color: var(--good);
-}
-
-.badge.warning {
-    background: #fef3c7;
-    color: var(--warning);
-}
-
-.badge.critical {
-    background: #fee2e2;
-    color: var(--critical);
-}
+.badge.good { background: #dcfce7; color: var(--good); }
+.badge.warning { background: #fef3c7; color: var(--warning); }
+.badge.critical { background: #fee2e2; color: var(--critical); }
 
 .metrics {
     display: grid;
@@ -228,9 +210,22 @@ button:hover {
     margin-top: 12px;
 }
 
-.issue-box b {
-    display: block;
-    margin-bottom: 6px;
+.details {
+    display: none;
+    margin-top: 14px;
+    padding: 14px;
+    border-radius: 12px;
+    background: #f3f4f6;
+    border: 1px solid var(--border);
+}
+
+.details.open { display: block; }
+
+.preview-img {
+    margin-top: 12px;
+    max-width: 100%;
+    border: 2px solid #111827;
+    border-radius: 10px;
 }
 
 .screenshot {
@@ -238,6 +233,13 @@ button:hover {
     border: 2px solid #111827;
     border-radius: 12px;
     margin-top: 12px;
+}
+
+.small-btn {
+    margin-top: 12px;
+    padding: 10px 14px;
+    width: auto;
+    background: #111827;
 }
 
 .loading {
@@ -248,30 +250,17 @@ button:hover {
 }
 
 @media (max-width: 800px) {
-    .input-row,
-    .cards,
-    .metrics {
+    .input-row, .cards, .metrics {
         grid-template-columns: 1fr;
     }
 
-    .header h1 {
-        font-size: 28px;
-    }
+    .header h1 { font-size: 28px; }
 }
 
 @media print {
-    button,
-    input {
-        display: none;
-    }
-
-    .container {
-        margin: 0;
-    }
-
-    .panel {
-        box-shadow: none;
-    }
+    button, input { display: none; }
+    .container { margin: 0; }
+    .panel { box-shadow: none; }
 }
 </style>
 </head>
@@ -284,7 +273,6 @@ button:hover {
 </div>
 
 <div class="container">
-
     <div class="panel">
         <div class="input-row">
             <input id="urlInput" placeholder="https://example.com">
@@ -294,11 +282,12 @@ button:hover {
     </div>
 
     <div id="result"></div>
-
 </div>
 
 <script>
 const API_URL = "https://web-typography-analyzer-production.up.railway.app";
+let currentData = null;
+let currentFilter = "all";
 
 async function analyze() {
     const url = document.getElementById("urlInput").value.trim();
@@ -320,99 +309,139 @@ async function analyze() {
             return;
         }
 
-        let html = `
-        <div class="panel score-card">
-            <div class="score-label">Overall Typography Score</div>
-            <div class="score-number">${data.score}/100</div>
-
-            <div class="cards">
-                <div class="stat-card">
-                    <h3>Total Elements</h3>
-                    <div>${data.stats.total}</div>
-                </div>
-                <div class="stat-card">
-                    <h3>Good</h3>
-                    <div class="good-text">${data.stats.good}</div>
-                </div>
-                <div class="stat-card">
-                    <h3>Warnings</h3>
-                    <div class="warning-text">${data.stats.warnings}</div>
-                </div>
-                <div class="stat-card">
-                    <h3>Critical</h3>
-                    <div class="critical-text">${data.stats.critical}</div>
-                </div>
-            </div>
-        </div>
-
-        <h2 class="section-title">Detailed Element Analysis</h2>
-        `;
-
-        data.data.forEach((el, index) => {
-            html += `
-            <div class="result-card ${el.level}">
-                <div class="result-header">
-                    <span>${index + 1}. ${el.tag}</span>
-                    <span class="badge ${el.level}">${el.level}</span>
-                </div>
-
-                <div class="result-body">
-                    <p><b>Element description:</b> "${el.text}"</p>
-
-                    <div class="metrics">
-                        <div class="metric">
-                            <span>Font size</span>
-                            <strong>${el.fontSize}px</strong>
-                        </div>
-                        <div class="metric">
-                            <span>Line height</span>
-                            <strong>${el.lineHeight}px</strong>
-                        </div>
-                        <div class="metric">
-                            <span>Alignment</span>
-                            <strong>${el.alignment}</strong>
-                        </div>
-                        <div class="metric">
-                            <span>Contrast</span>
-                            <strong>${el.contrast ?? "N/A"}</strong>
-                        </div>
-                        <div class="metric">
-                            <span>Element width</span>
-                            <strong>${el.widthPx}px</strong>
-                        </div>
-                        <div class="metric">
-                            <span>Characters per line</span>
-                            <strong>${el.charsPerLine}</strong>
-                        </div>
-                    </div>
-
-                    <div class="issue-box">
-                        <b>Problems</b>
-                        ${el.problems.length ? el.problems.join("<br>") : "No problems detected"}
-                    </div>
-
-                    <div class="issue-box">
-                        <b>Recommendations</b>
-                        ${el.fixes.length ? el.fixes.join("<br>") : "No changes needed"}
-                    </div>
-                </div>
-            </div>
-            `;
-        });
-
-        html += `
-        <h2 class="section-title">Visual Highlight</h2>
-        <div class="panel">
-            <p>Problematic elements are highlighted directly on the analyzed page screenshot.</p>
-            <img class="screenshot" src="${API_URL}/highlight.png?time=${Date.now()}" alt="Highlighted page screenshot">
-        </div>
-        `;
-
-        resultDiv.innerHTML = html;
+        currentData = data;
+        currentFilter = "all";
+        renderResults();
 
     } catch (error) {
         resultDiv.innerHTML = `<div class="panel"><b>Error:</b> ${error.message}</div>`;
     }
+}
+
+function setFilter(filter) {
+    currentFilter = filter;
+    renderResults();
+}
+
+function renderResults() {
+    if (!currentData) return;
+
+    const data = currentData;
+    const filtered = currentFilter === "all"
+        ? data.data
+        : data.data.filter(el => el.level === currentFilter);
+
+    let html = `
+    <div class="panel score-card">
+        <div class="score-label">Overall Typography Score</div>
+        <div class="score-number">${data.score}/100</div>
+
+        <div class="cards">
+            <div class="stat-card ${currentFilter === "all" ? "active" : ""}" onclick="setFilter('all')">
+                <h3>All Elements</h3>
+                <div>${data.stats.total}</div>
+            </div>
+            <div class="stat-card ${currentFilter === "good" ? "active" : ""}" onclick="setFilter('good')">
+                <h3>Good</h3>
+                <div class="good-text">${data.stats.good}</div>
+            </div>
+            <div class="stat-card ${currentFilter === "warning" ? "active" : ""}" onclick="setFilter('warning')">
+                <h3>Warnings</h3>
+                <div class="warning-text">${data.stats.warnings}</div>
+            </div>
+            <div class="stat-card ${currentFilter === "critical" ? "active" : ""}" onclick="setFilter('critical')">
+                <h3>Critical</h3>
+                <div class="critical-text">${data.stats.critical}</div>
+            </div>
+        </div>
+    </div>
+
+    <h2 class="section-title">Detailed Element Analysis (${filtered.length})</h2>
+    `;
+
+    filtered.forEach((el, index) => {
+        const detailsId = `details-${index}-${el.id}`;
+        const previewUrl = el.preview ? `${API_URL}${el.preview}?time=${Date.now()}` : null;
+
+        html += `
+        <div class="result-card ${el.level}">
+            <div class="result-header">
+                <span>${index + 1}. ${el.tag}</span>
+                <span class="badge ${el.level}">${el.level}</span>
+            </div>
+
+            <div class="result-body">
+                <p><b>Element description:</b> "${el.text}"</p>
+
+                <div class="metrics">
+                    <div class="metric">
+                        <span>Font size</span>
+                        <strong>${el.fontSize}px</strong>
+                    </div>
+                    <div class="metric">
+                        <span>Line height</span>
+                        <strong>${el.lineHeight}px</strong>
+                    </div>
+                    <div class="metric">
+                        <span>Alignment</span>
+                        <strong>${el.alignment}</strong>
+                    </div>
+                    <div class="metric">
+                        <span>Contrast</span>
+                        <strong>${el.contrast ?? "N/A"}</strong>
+                    </div>
+                    <div class="metric">
+                        <span>Element width</span>
+                        <strong>${el.widthPx}px</strong>
+                    </div>
+                    <div class="metric">
+                        <span>Characters per line</span>
+                        <strong>${el.charsPerLine}</strong>
+                    </div>
+                </div>
+
+                <div class="issue-box">
+                    <b>Problems</b><br>
+                    ${el.problems.length ? el.problems.join("<br>") : "No problems detected"}
+                </div>
+
+                <div class="issue-box">
+                    <b>Recommendations</b><br>
+                    ${el.fixes.length ? el.fixes.join("<br>") : "No changes needed"}
+                </div>
+
+                <button class="small-btn" onclick="toggleDetails('${detailsId}')">More details</button>
+
+                <div id="${detailsId}" class="details">
+                    <b>Why this matters:</b><br>
+                    ${el.details && el.details.length ? el.details.join("<br>") : "This element follows the defined typography rules."}
+
+                    ${previewUrl ? `
+                        <h4>Element preview</h4>
+                        <img class="preview-img" src="${previewUrl}" alt="Element preview">
+                    ` : `
+                        <p><i>Preview is available only for warning and critical elements.</i></p>
+                    `}
+                </div>
+            </div>
+        </div>
+        `;
+    });
+
+    html += `
+    <h2 class="section-title">Visual Highlight</h2>
+    <div class="panel">
+        <p>Problematic elements are highlighted directly on the analyzed page screenshot.</p>
+        <img class="screenshot" src="${API_URL}/highlight.png?time=${Date.now()}" alt="Highlighted page screenshot">
+    </div>
+    `;
+
+    document.getElementById("result").innerHTML = html;
+}
+
+function toggleDetails(id) {
+    const el = document.getElementById(id);
+    if (el) el.classList.toggle("open");
 }
 
 function downloadPDF() {
