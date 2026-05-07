@@ -3,156 +3,415 @@
 <head>
 <meta charset="UTF-8">
 <title>Typography Analyzer</title>
+
 <style>
-body {
-    font-family: Arial, sans-serif;
-    background: #f5f5f5;
-    margin: 0;
-    padding: 0;
+:root {
+    --bg: #f4f6f8;
+    --card: #ffffff;
+    --text: #1f2937;
+    --muted: #6b7280;
+    --border: #e5e7eb;
+    --good: #15803d;
+    --warning: #d97706;
+    --critical: #b91c1c;
+    --dark: #111827;
 }
 
-.container {
-    max-width: 1000px;
-    margin: 40px auto;
-    background: white;
-    padding: 24px;
-    border-radius: 12px;
-}
-
-input, button {
-    width: 100%;
-    padding: 12px;
-    margin-top: 10px;
+* {
     box-sizing: border-box;
 }
 
-button {
-    background: black;
-    color: white;
-    border: none;
-    cursor: pointer;
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
 }
 
-.score {
-    font-size: 30px;
-    margin: 20px 0;
+.header {
+    background: linear-gradient(135deg, #111827, #374151);
+    color: white;
+    padding: 48px 24px;
+    text-align: center;
+}
+
+.header h1 {
+    margin: 0;
+    font-size: 36px;
+}
+
+.header p {
+    margin-top: 12px;
+    color: #d1d5db;
+}
+
+.container {
+    max-width: 1180px;
+    margin: -32px auto 60px;
+    padding: 0 20px;
+}
+
+.panel {
+    background: var(--card);
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+    margin-bottom: 24px;
+}
+
+.input-row {
+    display: grid;
+    grid-template-columns: 1fr 180px;
+    gap: 12px;
+}
+
+input {
+    padding: 14px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    font-size: 16px;
+}
+
+button {
+    padding: 14px;
+    background: var(--dark);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+button:hover {
+    background: #374151;
+}
+
+.secondary-btn {
+    margin-top: 12px;
+    background: #4b5563;
+}
+
+.score-card {
+    text-align: center;
+}
+
+.score-number {
+    font-size: 56px;
+    font-weight: bold;
+    margin: 10px 0;
+}
+
+.score-label {
+    color: var(--muted);
+}
+
+.cards {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-top: 20px;
+}
+
+.stat-card {
+    background: #f9fafb;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 18px;
+}
+
+.stat-card h3 {
+    margin: 0;
+    color: var(--muted);
+    font-size: 14px;
+}
+
+.stat-card div {
+    font-size: 28px;
+    font-weight: bold;
+    margin-top: 8px;
+}
+
+.good-text { color: var(--good); }
+.warning-text { color: var(--warning); }
+.critical-text { color: var(--critical); }
+
+.section-title {
+    margin: 32px 0 16px;
+    font-size: 24px;
+}
+
+.result-card {
+    background: white;
+    border-radius: 14px;
+    border: 1px solid var(--border);
+    margin-bottom: 16px;
+    overflow: hidden;
+}
+
+.result-header {
+    padding: 14px 18px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     font-weight: bold;
 }
 
-.good, .warning, .critical {
+.result-body {
+    padding: 18px;
+}
+
+.badge {
+    padding: 6px 12px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.good .result-header {
+    border-left: 6px solid var(--good);
+}
+
+.warning .result-header {
+    border-left: 6px solid var(--warning);
+}
+
+.critical .result-header {
+    border-left: 6px solid var(--critical);
+}
+
+.badge.good {
+    background: #dcfce7;
+    color: var(--good);
+}
+
+.badge.warning {
+    background: #fef3c7;
+    color: var(--warning);
+}
+
+.badge.critical {
+    background: #fee2e2;
+    color: var(--critical);
+}
+
+.metrics {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin: 16px 0;
+}
+
+.metric {
+    background: #f9fafb;
+    border-radius: 10px;
+    padding: 12px;
+    border: 1px solid var(--border);
+}
+
+.metric span {
+    display: block;
+    color: var(--muted);
+    font-size: 13px;
+}
+
+.metric strong {
+    display: block;
+    margin-top: 4px;
+}
+
+.issue-box {
+    background: #f9fafb;
+    border-radius: 10px;
     padding: 14px;
-    margin: 12px 0;
-    border-radius: 8px;
-}
-
-.good {
-    background: #1f8b4c;
-    color: white;
-}
-
-.warning {
-    background: #f2a93b;
-    color: black;
-}
-
-.critical {
-    background: #c73333;
-    color: white;
-}
-
-.meta {
-    margin-bottom: 12px;
-}
-
-.stats {
-    background: #efefef;
-    padding: 14px;
-    border-radius: 8px;
-    margin: 20px 0;
-}
-
-img {
-    max-width: 100%;
-    border: 2px solid #222;
+    border: 1px solid var(--border);
     margin-top: 12px;
+}
+
+.issue-box b {
+    display: block;
+    margin-bottom: 6px;
+}
+
+.screenshot {
+    width: 100%;
+    border: 2px solid #111827;
+    border-radius: 12px;
+    margin-top: 12px;
+}
+
+.loading {
+    text-align: center;
+    padding: 30px;
+    color: var(--muted);
+    font-size: 18px;
+}
+
+@media (max-width: 800px) {
+    .input-row,
+    .cards,
+    .metrics {
+        grid-template-columns: 1fr;
+    }
+
+    .header h1 {
+        font-size: 28px;
+    }
+}
+
+@media print {
+    button,
+    input {
+        display: none;
+    }
+
+    .container {
+        margin: 0;
+    }
+
+    .panel {
+        box-shadow: none;
+    }
 }
 </style>
 </head>
+
 <body>
 
-<div class="container">
+<div class="header">
     <h1>Typography Analyzer</h1>
+    <p>Automated typography, readability and accessibility audit for web pages</p>
+</div>
 
-    <input id="urlInput" placeholder="https://example.com">
-    <button onclick="analyze()">Analyze</button>
-    <button onclick="downloadPDF()">Download PDF Report</button>
+<div class="container">
+
+    <div class="panel">
+        <div class="input-row">
+            <input id="urlInput" placeholder="https://example.com">
+            <button onclick="analyze()">Analyze</button>
+        </div>
+        <button class="secondary-btn" onclick="downloadPDF()">Download PDF Report</button>
+    </div>
 
     <div id="result"></div>
+
 </div>
 
 <script>
+const API_URL = "https://web-typography-analyzer-production.up.railway.app";
+
 async function analyze() {
     const url = document.getElementById("urlInput").value.trim();
     const resultDiv = document.getElementById("result");
 
     if (!url) {
-        resultDiv.innerHTML = "<p>Please enter a URL.</p>";
+        resultDiv.innerHTML = `<div class="panel">Please enter a valid URL.</div>`;
         return;
     }
 
-    resultDiv.innerHTML = "Loading...";
+    resultDiv.innerHTML = `<div class="panel loading">Analyzing website typography...</div>`;
 
     try {
-        const res = await fetch(
-            "https://web-typography-analyzer-production.up.railway.app/analyze?url=" +
-            encodeURIComponent(url)
-        );
-
+        const res = await fetch(`${API_URL}/analyze?url=${encodeURIComponent(url)}`);
         const data = await res.json();
 
         if (data.error) {
-            resultDiv.innerHTML = `<p><b>Error:</b> ${data.error}</p>`;
+            resultDiv.innerHTML = `<div class="panel"><b>Error:</b> ${data.error}</div>`;
             return;
         }
 
         let html = `
-            <div class="score">Score: ${data.score}/100</div>
-            <div class="stats">
-                <div><b>Total elements analyzed:</b> ${data.stats.total}</div>
-                <div><b>Good:</b> ${data.stats.good}</div>
-                <div><b>Warnings:</b> ${data.stats.warnings}</div>
-                <div><b>Critical:</b> ${data.stats.critical}</div>
+        <div class="panel score-card">
+            <div class="score-label">Overall Typography Score</div>
+            <div class="score-number">${data.score}/100</div>
+
+            <div class="cards">
+                <div class="stat-card">
+                    <h3>Total Elements</h3>
+                    <div>${data.stats.total}</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Good</h3>
+                    <div class="good-text">${data.stats.good}</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Warnings</h3>
+                    <div class="warning-text">${data.stats.warnings}</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Critical</h3>
+                    <div class="critical-text">${data.stats.critical}</div>
+                </div>
             </div>
+        </div>
+
+        <h2 class="section-title">Detailed Element Analysis</h2>
         `;
 
-        data.data.forEach(el => {
+        data.data.forEach((el, index) => {
             html += `
-                <div class="${el.level}">
-                    <div class="meta"><b>${el.tag}</b></div>
-                    <div><b>Element description:</b> "${el.text}"</div><br>
-
-                    <div><b>Font size:</b> ${el.fontSize}px</div>
-                    <div><b>Line height:</b> ${el.lineHeight}px</div>
-                    <div><b>Alignment:</b> ${el.alignment}</div>
-                    <div><b>Contrast:</b> ${el.contrast ?? "N/A"}</div>
-                    <div><b>Element width:</b> ${el.widthPx}px</div>
-                    <div><b>Estimated characters per line:</b> ${el.charsPerLine}</div>
-                    <div><b>Bottom margin:</b> ${el.marginBottom}px</div><br>
-
-                    <div><b>Problems:</b> ${el.problems.join(", ") || "None"}</div>
-                    <div><b>Recommendation:</b> ${el.fixes.join(", ") || "No changes needed"}</div>
+            <div class="result-card ${el.level}">
+                <div class="result-header">
+                    <span>${index + 1}. ${el.tag}</span>
+                    <span class="badge ${el.level}">${el.level}</span>
                 </div>
+
+                <div class="result-body">
+                    <p><b>Element description:</b> "${el.text}"</p>
+
+                    <div class="metrics">
+                        <div class="metric">
+                            <span>Font size</span>
+                            <strong>${el.fontSize}px</strong>
+                        </div>
+                        <div class="metric">
+                            <span>Line height</span>
+                            <strong>${el.lineHeight}px</strong>
+                        </div>
+                        <div class="metric">
+                            <span>Alignment</span>
+                            <strong>${el.alignment}</strong>
+                        </div>
+                        <div class="metric">
+                            <span>Contrast</span>
+                            <strong>${el.contrast ?? "N/A"}</strong>
+                        </div>
+                        <div class="metric">
+                            <span>Element width</span>
+                            <strong>${el.widthPx}px</strong>
+                        </div>
+                        <div class="metric">
+                            <span>Characters per line</span>
+                            <strong>${el.charsPerLine}</strong>
+                        </div>
+                    </div>
+
+                    <div class="issue-box">
+                        <b>Problems</b>
+                        ${el.problems.length ? el.problems.join("<br>") : "No problems detected"}
+                    </div>
+
+                    <div class="issue-box">
+                        <b>Recommendations</b>
+                        ${el.fixes.length ? el.fixes.join("<br>") : "No changes needed"}
+                    </div>
+                </div>
+            </div>
             `;
         });
 
         html += `
-            <h2>Visual Highlight</h2>
-            <img src="https://web-typography-analyzer-production.up.railway.app/highlight.png" alt="Highlighted page screenshot">
+        <h2 class="section-title">Visual Highlight</h2>
+        <div class="panel">
+            <p>Problematic elements are highlighted directly on the analyzed page screenshot.</p>
+            <img class="screenshot" src="${API_URL}/highlight.png?time=${Date.now()}" alt="Highlighted page screenshot">
+        </div>
         `;
 
         resultDiv.innerHTML = html;
+
     } catch (error) {
-        resultDiv.innerHTML = `<p><b>Error:</b> ${error.message}</p>`;
+        resultDiv.innerHTML = `<div class="panel"><b>Error:</b> ${error.message}</div>`;
     }
 }
 
