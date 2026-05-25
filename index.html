@@ -286,8 +286,8 @@ button:hover { background: #374151; }
 
 <script>
 const API_URL = "https://web-typography-analyzer-production.up.railway.app";
-let currentData = null;
-let currentFilter = "all";
+var currentData = null;
+var currentFilter = "all";
 
 async function analyze() {
     const url = document.getElementById("urlInput").value.trim();
@@ -331,7 +331,7 @@ function renderResults() {
         ? data.data
         : data.data.filter(el => el.level === currentFilter);
 
-    let html = `
+    var html = `
     <div class="panel score-card">
         <div class="score-label">Overall Typography Score</div>
         <div class="score-number">${data.score}/100</div>
