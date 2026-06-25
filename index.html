@@ -7,238 +7,384 @@
 <title>Tipografika</title>
 
 <style>
+:root {
+  --dark: #07111f;
+  --card: #ffffff;
+  --bg: #f5f7fb;
+  --border: #e5e7eb;
+  --text: #111827;
+  --muted: #64748b;
+  --purple: #6d28d9;
+  --good: #059669;
+  --warning: #f59e0b;
+  --bad: #ef4444;
+}
+
+* {
+  box-sizing: border-box;
+}
+
 body {
   margin: 0;
-  font-family: Arial, sans-serif;
-  background: #f3f4f6;
-  color: #111827;
+  font-family: Inter, Arial, sans-serif;
+  background: linear-gradient(180deg, #07111f 0, #07111f 120px, var(--bg) 120px);
+  color: var(--text);
 }
 
 .header {
-  background: linear-gradient(135deg, #111827, #374151);
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 24px 18px;
   color: white;
-  padding: 42px 18px 72px;
-  text-align: center;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.logo-box {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+}
+
+.logo {
+  width: 52px;
+  height: 52px;
+  background: linear-gradient(135deg, #7c3aed, #312e81);
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  font-size: 30px;
+  font-weight: 900;
 }
 
 .header h1 {
   margin: 0;
-  font-size: 38px;
+  font-size: 28px;
 }
 
 .header p {
-  color: #d1d5db;
+  margin: 4px 0 0;
+  color: #cbd5e1;
+}
+
+.header-features {
+  display: flex;
+  gap: 24px;
+  color: #cbd5e1;
+  font-size: 13px;
 }
 
 .container {
   max-width: 1180px;
-  margin: -42px auto 50px;
-  padding: 0 16px;
+  margin: 0 auto 60px;
+  padding: 0 18px;
 }
 
 .panel {
   background: white;
-  border-radius: 18px;
-  padding: 24px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-  margin-bottom: 24px;
+  border-radius: 16px;
+  padding: 22px;
+  border: 1px solid var(--border);
+  box-shadow: 0 14px 35px rgba(15, 23, 42, 0.08);
+  margin-bottom: 22px;
 }
 
 .input-row {
   display: grid;
-  grid-template-columns: 1fr 180px;
+  grid-template-columns: 1fr 210px 210px;
   gap: 14px;
 }
 
-input,
-button {
-  padding: 14px;
-  border-radius: 12px;
-  font-size: 16px;
+input, button {
+  padding: 15px;
+  border-radius: 10px;
+  font-size: 15px;
 }
 
 input {
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--border);
 }
 
 button {
   border: none;
-  background: #111827;
-  color: white;
   cursor: pointer;
+  background: var(--purple);
+  color: white;
+  font-weight: 700;
 }
 
-button:hover {
-  background: #374151;
+.secondary {
+  background: white;
+  color: var(--text);
+  border: 1px solid var(--border);
 }
 
-.score-main {
+.summary-grid {
+  display: grid;
+  grid-template-columns: 1.2fr repeat(3, 1fr);
+  gap: 18px;
+  margin-bottom: 24px;
+}
+
+.summary-card {
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 22px;
+  box-shadow: 0 10px 25px rgba(15, 23, 42, 0.05);
+}
+
+.big-score {
   text-align: center;
 }
 
-.score-main h2 {
-  color: #6b7280;
-  font-size: 16px;
+.big-score .circle {
+  width: 130px;
+  height: 130px;
+  margin: 12px auto;
+  border-radius: 50%;
+  border: 12px solid #ddd6fe;
+  display: grid;
+  place-items: center;
+  font-size: 36px;
+  font-weight: 900;
+  color: var(--dark);
 }
 
-.score-main .number {
-  font-size: 60px;
-  font-weight: 800;
+.device-score {
+  font-size: 34px;
+  font-weight: 900;
+  margin: 10px 0;
 }
 
-.viewport-grid {
+.device-tabs {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  overflow: hidden;
+  margin-bottom: 14px;
+}
+
+.device-tab {
+  padding: 18px;
+  text-align: center;
+  cursor: pointer;
+  font-weight: 700;
+  border-right: 1px solid var(--border);
+}
+
+.device-tab:last-child {
+  border-right: none;
+}
+
+.device-tab.active {
+  color: var(--purple);
+  background: #f5f3ff;
+  outline: 2px solid var(--purple);
+  outline-offset: -2px;
+}
+
+.analysis-layout {
+  display: grid;
+  grid-template-columns: 360px 1fr;
   gap: 18px;
 }
 
-.viewport-card {
-  background: #f9fafb;
-  border: 1px solid #e5e7eb;
-  border-radius: 16px;
-  padding: 20px;
-}
-
-.viewport-card h3 {
-  margin-top: 0;
-}
-
-.score {
-  font-size: 42px;
-  font-weight: 800;
-  margin: 12px 0;
-}
-
-.stats {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
-  margin-top: 14px;
-}
-
-.stat {
+.left-panel,
+.right-panel {
   background: white;
-  border-radius: 10px;
-  padding: 10px;
-  text-align: center;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 18px;
+}
+
+.filter-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 14px 0;
+}
+
+.filter {
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: #f8fafc;
+  border: 1px solid var(--border);
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.filter.active {
+  outline: 2px solid var(--purple);
+  color: var(--purple);
+}
+
+.issue-list {
+  max-height: 760px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.issue {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px;
+  margin-bottom: 12px;
   cursor: pointer;
 }
 
-.stat:hover {
-  transform: translateY(-2px);
+.issue.active {
+  outline: 2px solid var(--purple);
 }
 
-.stat.active {
-  outline: 3px solid #111827;
+.issue.good {
+  background: #ecfdf5;
+  border-color: #bbf7d0;
 }
 
-.good {
-  color: #15803d;
+.issue.warning {
+  background: #fffbeb;
+  border-color: #fde68a;
 }
 
-.warning {
+.issue.critical {
+  background: #fef2f2;
+  border-color: #fecaca;
+}
+
+.badge {
+  display: inline-block;
+  padding: 5px 9px;
+  border-radius: 7px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.badge.good {
+  background: #d1fae5;
+  color: var(--good);
+}
+
+.badge.warning {
+  background: #fef3c7;
   color: #d97706;
 }
 
-.critical {
-  color: #dc2626;
+.badge.critical {
+  background: #fee2e2;
+  color: var(--bad);
 }
 
-.category-block {
-  margin-top: 18px;
+.detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 220px;
+  gap: 18px;
+  margin: 18px 0;
+}
+
+.detail-box {
+  border: 1px solid var(--border);
+  border-radius: 12px;
   padding: 16px;
-  border-radius: 14px;
-  background: #f9fafb;
-  border: 1px solid #e5e7eb;
+  background: #fcfcfd;
 }
 
-.element {
-  background: white;
-  border-radius: 14px;
-  border: 1px solid #e5e7eb;
-  margin: 12px 0;
-  padding: 14px;
-}
-
-.element.good {
-  border-left: 6px solid #15803d;
-}
-
-.element.warning {
-  border-left: 6px solid #d97706;
-}
-
-.element.critical {
-  border-left: 6px solid #dc2626;
-}
-
-.metrics {
+.metric-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
-  margin: 12px 0;
+  gap: 9px;
 }
 
 .metric {
-  background: #f9fafb;
-  padding: 10px;
+  border: 1px solid var(--border);
+  background: #f8fafc;
   border-radius: 10px;
-  border: 1px solid #e5e7eb;
+  padding: 11px;
 }
 
 .metric span {
   display: block;
-  color: #6b7280;
+  color: var(--muted);
   font-size: 12px;
 }
 
+.preview,
+.page-highlight {
+  width: 100%;
+  object-fit: contain;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: #f8fafc;
+}
+
 .preview {
-  width: 100%;
   max-height: 220px;
-  object-fit: contain;
-  border-radius: 12px;
-  border: 2px solid #111827;
-  margin-top: 10px;
-  background: #f9fafb;
 }
 
-.screenshot-wrap {
-  text-align: center;
+.page-highlight {
+  max-height: 620px;
 }
 
-.screenshot {
-  width: 100%;
-  max-width: 760px;
-  max-height: 430px;
-  object-fit: contain;
-  border-radius: 12px;
-  border: 2px solid #111827;
+.highlight-tools {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
   margin-top: 12px;
-  background: #f9fafb;
 }
 
-.small-text {
-  color: #6b7280;
-  font-size: 14px;
+.tool-btn {
+  width: 42px;
+  height: 42px;
+  background: white;
+  color: var(--text);
+  border: 1px solid var(--border);
 }
 
-@media (max-width: 850px) {
+.cookie-status {
+  margin-top: 22px;
+  background: #f5f3ff;
+  border: 1px solid #ddd6fe;
+  border-radius: 14px;
+  padding: 18px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.accepted {
+  background: #dcfce7;
+  color: #166534;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-weight: 700;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+@media (max-width: 950px) {
+  .header,
+  .header-features {
+    display: block;
+  }
+
+  .header-features {
+    margin-top: 16px;
+  }
+
   .input-row,
-  .viewport-grid,
-  .metrics {
+  .summary-grid,
+  .analysis-layout,
+  .detail-grid,
+  .metric-grid {
     grid-template-columns: 1fr;
   }
 
-  .header h1 {
-    font-size: 30px;
-  }
-
-  .score-main .number {
-    font-size: 44px;
-  }
-
-  .stats {
+  .device-tabs {
     grid-template-columns: 1fr;
   }
 }
@@ -248,39 +394,48 @@ button:hover {
 <body>
 
 <div class="header">
-  <h1>Tipografika</h1>
-  <p>Responsive typography analysis for Desktop, Tablet and Mobile</p>
+  <div class="logo-box">
+    <div class="logo">T</div>
+    <div>
+      <h1>Tipografika</h1>
+      <p>Responsive Typography Analyzer</p>
+    </div>
+  </div>
+
+  <div class="header-features">
+    <div>Accurate Analysis</div>
+    <div>Responsive 3 Breakpoints</div>
+    <div>Actionable Recommendations</div>
+  </div>
 </div>
 
 <div class="container">
-
   <div class="panel">
+    <label>Website URL</label>
     <div class="input-row">
       <input id="urlInput" placeholder="https://example.com">
-      <button onclick="analyze()">Analyze</button>
+      <button onclick="analyze()">Analyze Website</button>
+      <button class="secondary" onclick="window.print()">Export Report</button>
     </div>
   </div>
 
   <div id="result"></div>
-
 </div>
 
 <script>
 const API_URL = "https://web-typography-analyzer-production.up.railway.app";
 
 let appData = null;
-let selectedFilters = {
-  Desktop: "warning",
-  Tablet: "warning",
-  Mobile: "warning"
-};
+let activeDevice = "Desktop";
+let activeFilter = "all";
+let selectedIssueId = null;
 
 async function analyze() {
   const url = document.getElementById("urlInput").value.trim();
   const result = document.getElementById("result");
 
   if (!url) {
-    result.innerHTML = `<div class="panel">Please enter a URL.</div>`;
+    result.innerHTML = `<div class="panel">Please enter a valid URL.</div>`;
     return;
   }
 
@@ -296,79 +451,70 @@ async function analyze() {
     }
 
     appData = data;
-    render();
+    activeDevice = "Desktop";
+    activeFilter = "all";
 
+    const firstView = getView();
+    selectedIssueId = firstView.data[0]?.id || null;
+
+    render();
   } catch (error) {
     result.innerHTML = `<div class="panel"><b>Error:</b> ${error.message}</div>`;
   }
 }
 
-function setFilter(viewport, filter) {
-  selectedFilters[viewport] = filter;
+function getView() {
+  return appData.responsive.find(v => v.viewport === activeDevice);
+}
+
+function getSelectedIssue() {
+  const view = getView();
+  return view.data.find(i => i.id === selectedIssueId) || view.data[0];
+}
+
+function setDevice(device) {
+  activeDevice = device;
+  activeFilter = "all";
+  const view = getView();
+  selectedIssueId = view.data[0]?.id || null;
   render();
 }
 
-function renderElements(view) {
-  const filter = selectedFilters[view.viewport] || "warning";
-  const elements = view.data.filter(el => el.level === filter);
+function setFilter(filter) {
+  activeFilter = filter;
+  const view = getView();
+  const list = filter === "all" ? view.data : view.data.filter(i => i.level === filter);
+  selectedIssueId = list[0]?.id || view.data[0]?.id || null;
+  render();
+}
 
+function selectIssue(id) {
+  selectedIssueId = id;
+  render();
+}
+
+function levelLabel(level) {
+  if (level === "critical") return "Bad";
+  if (level === "warning") return "Warning";
+  return "Good";
+}
+
+function renderSummary() {
   let html = `
-    <div class="category-block">
-      <h3>${filterLabel(filter)} elements (${elements.length})</h3>
-      <p class="small-text">Click Good, Warning or Bad above to show elements from this category.</p>
+    <div class="summary-grid">
+      <div class="summary-card big-score">
+        <h3>Overall Typography Score</h3>
+        <div class="circle">${appData.score}<small>/100</small></div>
+        <p class="muted">Good job! Keep improving.</p>
+      </div>
   `;
 
-  if (!elements.length) {
-    html += `<p>No elements in this category.</p>`;
-  }
-
-  elements.forEach(el => {
-    const preview = el.preview
-      ? `${API_URL}${el.preview}?time=${Date.now()}`
-      : null;
-
+  appData.responsive.forEach(view => {
     html += `
-      <div class="element ${el.level}">
-        <b>${el.tag}</b> — ${filterLabel(el.level)}<br>
-        <p>${el.text}</p>
-
-        <div class="metrics">
-          <div class="metric">
-            <span>Font size</span>
-            <b>${el.fontSize}px</b>
-          </div>
-          <div class="metric">
-            <span>Line height</span>
-            <b>${el.lineHeight}px</b>
-          </div>
-          <div class="metric">
-            <span>Contrast</span>
-            <b>${el.contrast ?? "N/A"}</b>
-          </div>
-          <div class="metric">
-            <span>Alignment</span>
-            <b>${el.alignment}</b>
-          </div>
-          <div class="metric">
-            <span>Width</span>
-            <b>${el.widthPx}px</b>
-          </div>
-          <div class="metric">
-            <span>Chars / line</span>
-            <b>${el.charsPerLine}</b>
-          </div>
-        </div>
-
-        <b>Problems:</b><br>
-        ${el.problems.length ? el.problems.join("<br>") : "No problems detected"}<br><br>
-
-        <b>Recommendations:</b><br>
-        ${el.fixes.length ? el.fixes.join("<br>") : "No changes needed"}
-
-        ${preview ? `
-          <h4>Small element highlight</h4>
-          <img class="preview" src="${preview}" alt="Element preview">
-        ` : ""}
+      <div class="summary-card">
+        <h3>${view.viewport}</h3>
+        <div class="device-score">${view.score}<small>/100</small></div>
+        <p class="muted">${view.stats.good} Good · ${view.stats.warnings} Warning · ${view.stats.critical} Bad</p>
       </div>
     `;
   });
@@ -377,65 +523,120 @@ function renderElements(view) {
   return html;
 }
 
-function filterLabel(level) {
-  if (level === "critical") return "Bad";
-  if (level === "warning") return "Warning";
-  return "Good";
+function renderTabs() {
+  return `
+    <div class="device-tabs">
+      ${["Desktop", "Tablet", "Mobile"].map(device => `
+        <div class="device-tab ${activeDevice === device ? "active" : ""}" onclick="setDevice('${device}')">
+          ${device}
+        </div>
+      `).join("")}
+    </div>
+  `;
+}
+
+function renderLeftPanel(view) {
+  const filtered = activeFilter === "all"
+    ? view.data
+    : view.data.filter(i => i.level === activeFilter);
+
+  return `
+    <div class="left-panel">
+      <h3>Found ${view.stats.total} elements</h3>
+
+      <div class="filter-row">
+        <div class="filter ${activeFilter === "all" ? "active" : ""}" onclick="setFilter('all')">All ${view.stats.total}</div>
+        <div class="filter ${activeFilter === "good" ? "active" : ""}" onclick="setFilter('good')">Good ${view.stats.good}</div>
+        <div class="filter ${activeFilter === "warning" ? "active" : ""}" onclick="setFilter('warning')">Warning ${view.stats.warnings}</div>
+        <div class="filter ${activeFilter === "critical" ? "active" : ""}" onclick="setFilter('critical')">Bad ${view.stats.critical}</div>
+      </div>
+
+      <div class="issue-list">
+        ${filtered.map(issue => `
+          <div class="issue ${issue.level} ${selectedIssueId === issue.id ? "active" : ""}" onclick="selectIssue('${issue.id}')">
+            <span class="badge ${issue.level}">${levelLabel(issue.level)}</span>
+            <b>${issue.tag}</b>
+            <p>${issue.text}</p>
+            <small>
+              Font: ${issue.fontSize}px · Line: ${issue.lineHeight}px · Contrast: ${issue.contrast ?? "N/A"}
+            </small>
+          </div>
+        `).join("")}
+      </div>
+    </div>
+  `;
+}
+
+function renderRightPanel(issue, view) {
+  const preview = issue?.preview
+    ? `${API_URL}${issue.preview}?time=${Date.now()}`
+    : null;
+
+  return `
+    <div class="right-panel">
+      ${issue ? `
+        <h2>${issue.tag} Element <span class="badge ${issue.level}">${levelLabel(issue.level)}</span></h2>
+        <p class="muted">Element ID: ${issue.id}</p>
+
+        <div class="detail-grid">
+          <div class="detail-box">
+            <h4>Problems</h4>
+            ${issue.problems.length ? issue.problems.map(p => `<p>❌ ${p}</p>`).join("") : "<p>✅ No problems detected.</p>"}
+          </div>
+
+          <div class="detail-box">
+            <h4>Recommendations</h4>
+            ${issue.fixes.length ? issue.fixes.map(f => `<p>✅ ${f}</p>`).join("") : "<p>No changes needed.</p>"}
+          </div>
+
+          <div class="detail-box">
+            <h4>Metrics</h4>
+            <p>Font size: <b>${issue.fontSize}px</b></p>
+            <p>Line height: <b>${issue.lineHeight}px</b></p>
+            <p>Contrast: <b>${issue.contrast ?? "N/A"}</b></p>
+            <p>Alignment: <b>${issue.alignment}</b></p>
+          </div>
+        </div>
+
+        <h3>Element preview</h3>
+        ${preview ? `<img class="preview" src="${preview}">` : `<p>No preview available.</p>`}
+      ` : `<p>No selected issue.</p>`}
+
+      <h3>Page highlight (${view.viewport})</h3>
+      <img class="page-highlight" src="${API_URL}/${view.viewport.toLowerCase()}-highlight.png?time=${Date.now()}">
+
+      <div class="highlight-tools">
+        <button class="tool-btn">−</button>
+        <button class="tool-btn">87%</button>
+        <button class="tool-btn">+</button>
+      </div>
+    </div>
+  `;
 }
 
 function render() {
   if (!appData) return;
 
-  let html = `
-    <div class="panel score-main">
-      <h2>Overall Responsive Typography Score</h2>
-      <div class="number">${appData.score}/100</div>
+  const view = getView();
+  const issue = getSelectedIssue();
+
+  document.getElementById("result").innerHTML = `
+    ${renderSummary()}
+    ${renderTabs()}
+
+    <div class="analysis-layout">
+      ${renderLeftPanel(view)}
+      ${renderRightPanel(issue, view)}
     </div>
 
-    <div class="viewport-grid">
+    <div class="cookie-status">
+      <div>
+        <b>Cookie/Privacy banner</b><br>
+        <span class="muted">Automatically accepted or hidden to ensure clean screenshots.</span>
+      </div>
+      <div class="accepted">✓ Accepted</div>
+    </div>
   `;
-
-  appData.responsive.forEach(view => {
-    const current = selectedFilters[view.viewport];
-
-    html += `
-      <div class="viewport-card">
-        <h3>${view.viewport}</h3>
-        <div class="score">${view.score}/100</div>
-
-        <div class="stats">
-          <div class="stat ${current === "good" ? "active" : ""}" onclick="setFilter('${view.viewport}', 'good')">
-            <b class="good">${view.stats.good}</b><br>
-            Good
-          </div>
-          <div class="stat ${current === "warning" ? "active" : ""}" onclick="setFilter('${view.viewport}', 'warning')">
-            <b class="warning">${view.stats.warnings}</b><br>
-            Warning
-          </div>
-          <div class="stat ${current === "critical" ? "active" : ""}" onclick="setFilter('${view.viewport}', 'critical')">
-            <b class="critical">${view.stats.critical}</b><br>
-            Bad
-          </div>
-        </div>
-
-        ${renderElements(view)}
-      </div>
-    `;
-  });
-
-  html += `</div>`;
-
-  appData.responsive.forEach(view => {
-    html += `
-      <div class="panel screenshot-wrap">
-        <h2>${view.viewport} overall highlight</h2>
-        <p class="small-text">Reduced full-page screenshot with highlighted typography elements.</p>
-        <img class="screenshot" src="${API_URL}/${view.viewport.toLowerCase()}-highlight.png?time=${Date.now()}">
-      </div>
-    `;
-  });
-
-  document.getElementById("result").innerHTML = html;
 }
 </script>
 
