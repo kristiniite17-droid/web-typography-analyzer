@@ -7,407 +7,196 @@
 <title>Tipografika</title>
 
 <style>
-:root {
-    --bg: #f3f4f6;
-    --card: #ffffff;
-    --dark: #1f2937;
-    --dark2: #111827;
-    --text: #111827;
-    --muted: #6b7280;
-    --border: #e5e7eb;
-    --good: #15803d;
-    --warning: #d97706;
-    --critical: #dc2626;
-}
-
-* {
-    box-sizing: border-box;
-}
-
 body {
-    margin: 0;
-    font-family: Arial, sans-serif;
-    background: var(--bg);
-    color: var(--text);
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #f3f4f6;
+  color: #111827;
 }
 
 .header {
-    background: linear-gradient(135deg, #111827, #374151);
-    color: white;
-    padding: 42px 18px 72px;
-    text-align: center;
+  background: linear-gradient(135deg, #111827, #374151);
+  color: white;
+  padding: 42px 18px 72px;
+  text-align: center;
 }
 
 .header h1 {
-    margin: 0;
-    font-size: 38px;
+  margin: 0;
+  font-size: 38px;
 }
 
 .header p {
-    margin: 12px auto 0;
-    max-width: 700px;
-    color: #e5e7eb;
-    font-size: 17px;
+  color: #d1d5db;
 }
 
 .container {
-    width: 100%;
-    max-width: 1180px;
-    margin: -42px auto 50px;
-    padding: 0 16px;
+  max-width: 1180px;
+  margin: -42px auto 50px;
+  padding: 0 16px;
 }
 
 .panel {
-    background: var(--card);
-    border-radius: 18px;
-    padding: 24px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-    margin-bottom: 24px;
+  background: white;
+  border-radius: 18px;
+  padding: 24px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+  margin-bottom: 24px;
 }
 
 .input-row {
-    display: grid;
-    grid-template-columns: 1fr 190px;
-    gap: 14px;
+  display: grid;
+  grid-template-columns: 1fr 180px;
+  gap: 14px;
+}
+
+input,
+button {
+  padding: 14px;
+  border-radius: 12px;
+  font-size: 16px;
 }
 
 input {
-    width: 100%;
-    padding: 15px 16px;
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    font-size: 16px;
+  border: 1px solid #e5e7eb;
 }
 
 button {
-    padding: 15px 16px;
-    background: var(--dark2);
-    color: white;
-    border: none;
-    border-radius: 12px;
-    cursor: pointer;
-    font-size: 16px;
+  border: none;
+  background: #111827;
+  color: white;
+  cursor: pointer;
 }
 
 button:hover {
-    background: #374151;
+  background: #374151;
 }
 
-.secondary-btn {
-    margin-top: 14px;
-    background: #4b5563;
+.score-main {
+  text-align: center;
 }
 
-.score-card {
-    text-align: center;
+.score-main h2 {
+  color: #6b7280;
+  font-size: 16px;
 }
 
-.score-label {
-    color: var(--muted);
-    font-size: 16px;
+.score-main .number {
+  font-size: 60px;
+  font-weight: 800;
 }
 
-.score-number {
-    font-size: 62px;
-    font-weight: 800;
-    margin: 12px 0 24px;
+.viewport-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
 }
 
-.cards {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 16px;
+.viewport-card {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  padding: 20px;
 }
 
-.stat-card {
-    background: #f9fafb;
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 20px;
-    cursor: pointer;
-    transition: 0.2s;
+.viewport-card h3 {
+  margin-top: 0;
 }
 
-.stat-card:hover {
-    transform: translateY(-2px);
+.score {
+  font-size: 42px;
+  font-weight: 800;
+  margin: 12px 0;
 }
 
-.stat-card.active {
-    outline: 3px solid var(--dark2);
+.good {
+  color: #15803d;
 }
 
-.stat-card h3 {
-    margin: 0;
-    color: var(--muted);
-    font-size: 14px;
+.warning {
+  color: #d97706;
 }
 
-.stat-card div {
-    font-size: 30px;
-    font-weight: bold;
-    margin-top: 10px;
+.critical {
+  color: #dc2626;
 }
 
-.good-text { color: var(--good); }
-.warning-text { color: var(--warning); }
-.critical-text { color: var(--critical); }
-
-.section-title {
-    font-size: 24px;
-    margin: 28px 0 16px;
+.stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-top: 14px;
 }
 
-.result-card {
-    background: white;
-    border-radius: 16px;
-    border: 1px solid var(--border);
-    margin-bottom: 18px;
-    overflow: hidden;
+.stat {
+  background: white;
+  border-radius: 10px;
+  padding: 10px;
+  text-align: center;
+  border: 1px solid #e5e7eb;
 }
 
-.result-header {
-    padding: 16px 18px;
-    display: flex;
-    justify-content: space-between;
-    gap: 12px;
-    align-items: center;
-    font-weight: bold;
+.element {
+  background: white;
+  border-radius: 14px;
+  border: 1px solid #e5e7eb;
+  margin: 12px 0;
+  padding: 14px;
 }
 
-.good .result-header { border-left: 6px solid var(--good); }
-.warning .result-header { border-left: 6px solid var(--warning); }
-.critical .result-header { border-left: 6px solid var(--critical); }
-
-.badge {
-    padding: 6px 12px;
-    border-radius: 999px;
-    font-size: 12px;
-    font-weight: bold;
-    text-transform: uppercase;
-    white-space: nowrap;
+.element.warning {
+  border-left: 6px solid #d97706;
 }
 
-.badge.good {
-    background: #dcfce7;
-    color: var(--good);
+.element.critical {
+  border-left: 6px solid #dc2626;
 }
 
-.badge.warning {
-    background: #fef3c7;
-    color: var(--warning);
-}
-
-.badge.critical {
-    background: #fee2e2;
-    color: var(--critical);
-}
-
-.result-body {
-    padding: 18px;
-}
-
-.result-body p {
-    line-height: 1.5;
-    word-break: break-word;
+.element.good {
+  border-left: 6px solid #15803d;
 }
 
 .metrics {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 12px;
-    margin: 16px 0;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin: 12px 0;
 }
 
 .metric {
-    background: #f9fafb;
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 13px;
-    min-width: 0;
+  background: #f9fafb;
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
 }
 
 .metric span {
-    display: block;
-    color: var(--muted);
-    font-size: 12px;
-}
-
-.metric strong {
-    display: block;
-    margin-top: 5px;
-    word-break: break-word;
-}
-
-.issue-box {
-    background: #f9fafb;
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 14px;
-    margin-top: 12px;
-    line-height: 1.45;
-    word-break: break-word;
-}
-
-.small-btn {
-    width: auto;
-    margin-top: 12px;
-    padding: 10px 14px;
-    font-size: 14px;
-}
-
-.details {
-    display: none;
-    margin-top: 14px;
-    padding: 14px;
-    background: #f3f4f6;
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    line-height: 1.45;
-}
-
-.details.open {
-    display: block;
-}
-
-.preview-img {
-    max-width: 100%;
-    margin-top: 12px;
-    border: 2px solid var(--dark2);
-    border-radius: 10px;
+  display: block;
+  color: #6b7280;
+  font-size: 12px;
 }
 
 .screenshot {
-    width: 100%;
-    max-width: 100%;
-    border: 2px solid var(--dark2);
-    border-radius: 12px;
-    margin-top: 12px;
+  width: 100%;
+  border-radius: 12px;
+  border: 2px solid #111827;
+  margin-top: 12px;
 }
 
-.loading {
-    text-align: center;
-    font-size: 18px;
-    color: var(--muted);
-    padding: 34px;
-}
+@media (max-width: 850px) {
+  .input-row,
+  .viewport-grid,
+  .metrics {
+    grid-template-columns: 1fr;
+  }
 
-@media (max-width: 900px) {
-    .cards {
-        grid-template-columns: repeat(2, 1fr);
-    }
+  .header h1 {
+    font-size: 30px;
+  }
 
-    .metrics {
-        grid-template-columns: repeat(2, 1fr);
-    }
-}
-
-@media (max-width: 600px) {
-    .header {
-        padding: 34px 16px 64px;
-    }
-
-    .header h1 {
-        font-size: 32px;
-    }
-
-    .header p {
-        font-size: 14px;
-        line-height: 1.4;
-    }
-
-    .container {
-        padding: 0 10px;
-        margin-top: -38px;
-    }
-
-    .panel {
-        padding: 16px;
-        border-radius: 14px;
-    }
-
-    .input-row {
-        grid-template-columns: 1fr;
-    }
-
-    input,
-    button {
-        font-size: 15px;
-        padding: 14px;
-    }
-
-    .secondary-btn {
-        width: 100%;
-    }
-
-    .score-number {
-        font-size: 46px;
-    }
-
-    .cards {
-        grid-template-columns: 1fr 1fr;
-        gap: 10px;
-    }
-
-    .stat-card {
-        padding: 14px;
-    }
-
-    .stat-card div {
-        font-size: 24px;
-    }
-
-    .section-title {
-        font-size: 20px;
-        margin-left: 4px;
-    }
-
-    .result-header {
-        align-items: flex-start;
-        padding: 14px;
-    }
-
-    .result-body {
-        padding: 14px;
-    }
-
-    .metrics {
-        grid-template-columns: 1fr;
-        gap: 8px;
-    }
-
-    .issue-box {
-        font-size: 14px;
-    }
-
-    .small-btn {
-        width: 100%;
-    }
-}
-
-@media (max-width: 380px) {
-    .cards {
-        grid-template-columns: 1fr;
-    }
-
-    .score-number {
-        font-size: 40px;
-    }
-}
-
-@media print {
-    input,
-    button {
-        display: none;
-    }
-
-    .container {
-        margin: 0;
-        padding: 0;
-    }
-
-    .panel {
-        box-shadow: none;
-    }
+  .score-main .number {
+    font-size: 44px;
+  }
 }
 </style>
 </head>
@@ -415,197 +204,141 @@ button:hover {
 <body>
 
 <div class="header">
-    <h1>Tipografika</h1>
-    <p>Automated typography, readability and accessibility audit for web pages</p>
+  <h1>Tipografika</h1>
+  <p>Responsive typography analysis for Desktop, Tablet and Mobile</p>
 </div>
 
 <div class="container">
 
-    <div class="panel">
-        <div class="input-row">
-            <input id="urlInput" placeholder="https://example.com">
-            <button onclick="analyze()">Analyze</button>
-        </div>
-
-        <button class="secondary-btn" onclick="downloadPDF()">Download PDF Report</button>
+  <div class="panel">
+    <div class="input-row">
+      <input id="urlInput" placeholder="https://example.com">
+      <button onclick="analyze()">Analyze</button>
     </div>
+  </div>
 
-    <div id="result"></div>
+  <div id="result"></div>
 
 </div>
 
 <script>
 const API_URL = "https://web-typography-analyzer-production.up.railway.app";
 
-let currentData = null;
-let currentFilter = "all";
-
 async function analyze() {
-    const url = document.getElementById("urlInput").value.trim();
-    const resultDiv = document.getElementById("result");
+  const url = document.getElementById("urlInput").value.trim();
+  const result = document.getElementById("result");
 
-    if (!url) {
-        resultDiv.innerHTML = `<div class="panel">Please enter a valid URL.</div>`;
-        return;
+  if (!url) {
+    result.innerHTML = `<div class="panel">Please enter a URL.</div>`;
+    return;
+  }
+
+  result.innerHTML = `<div class="panel">Analyzing responsive typography...</div>`;
+
+  try {
+    const res = await fetch(`${API_URL}/analyze?url=${encodeURIComponent(url)}`);
+    const data = await res.json();
+
+    if (data.error) {
+      result.innerHTML = `<div class="panel"><b>Error:</b> ${data.error}</div>`;
+      return;
     }
-
-    resultDiv.innerHTML = `<div class="panel loading">Analyzing website typography...</div>`;
-
-    try {
-        const res = await fetch(`${API_URL}/analyze?url=${encodeURIComponent(url)}`);
-        const data = await res.json();
-
-        if (data.error) {
-            resultDiv.innerHTML = `<div class="panel"><b>Error:</b> ${data.error}</div>`;
-            return;
-        }
-
-        currentData = data;
-        currentFilter = "all";
-        renderResults();
-
-    } catch (error) {
-        resultDiv.innerHTML = `<div class="panel"><b>Error:</b> ${error.message}</div>`;
-    }
-}
-
-function setFilter(filter) {
-    currentFilter = filter;
-    renderResults();
-}
-
-function renderResults() {
-    if (!currentData) return;
-
-    const data = currentData;
-
-    const filtered = currentFilter === "all"
-        ? data.data
-        : data.data.filter(el => el.level === currentFilter);
 
     let html = `
-        <div class="panel score-card">
-            <div class="score-label">Overall Typography Score</div>
-            <div class="score-number">${data.score}/100</div>
+      <div class="panel score-main">
+        <h2>Overall Responsive Typography Score</h2>
+        <div class="number">${data.score}/100</div>
+      </div>
 
-            <div class="cards">
-                <div class="stat-card ${currentFilter === "all" ? "active" : ""}" onclick="setFilter('all')">
-                    <h3>All Elements</h3>
-                    <div>${data.stats.total}</div>
-                </div>
-
-                <div class="stat-card ${currentFilter === "good" ? "active" : ""}" onclick="setFilter('good')">
-                    <h3>Good</h3>
-                    <div class="good-text">${data.stats.good}</div>
-                </div>
-
-                <div class="stat-card ${currentFilter === "warning" ? "active" : ""}" onclick="setFilter('warning')">
-                    <h3>Warnings</h3>
-                    <div class="warning-text">${data.stats.warnings}</div>
-                </div>
-
-                <div class="stat-card ${currentFilter === "critical" ? "active" : ""}" onclick="setFilter('critical')">
-                    <h3>Critical</h3>
-                    <div class="critical-text">${data.stats.critical}</div>
-                </div>
-            </div>
-        </div>
-
-        <h2 class="section-title">Detailed Element Analysis (${filtered.length})</h2>
+      <div class="viewport-grid">
     `;
 
-    filtered.forEach((el, index) => {
-        const detailsId = `details-${index}-${el.id}`;
-        const previewUrl = el.preview ? `${API_URL}${el.preview}?time=${Date.now()}` : null;
+    data.responsive.forEach(view => {
+      html += `
+        <div class="viewport-card">
+          <h3>${view.viewport}</h3>
+          <div class="score">${view.score}/100</div>
 
-        html += `
-            <div class="result-card ${el.level}">
-                <div class="result-header">
-                    <span>${index + 1}. ${el.tag}</span>
-                    <span class="badge ${el.level}">${el.level}</span>
-                </div>
-
-                <div class="result-body">
-                    <p><b>Element description:</b> "${el.text}"</p>
-
-                    <div class="metrics">
-                        <div class="metric">
-                            <span>Font size</span>
-                            <strong>${el.fontSize}px</strong>
-                        </div>
-
-                        <div class="metric">
-                            <span>Line height</span>
-                            <strong>${el.lineHeight}px</strong>
-                        </div>
-
-                        <div class="metric">
-                            <span>Alignment</span>
-                            <strong>${el.alignment}</strong>
-                        </div>
-
-                        <div class="metric">
-                            <span>Contrast</span>
-                            <strong>${el.contrast ?? "N/A"}</strong>
-                        </div>
-
-                        <div class="metric">
-                            <span>Element width</span>
-                            <strong>${el.widthPx}px</strong>
-                        </div>
-
-                        <div class="metric">
-                            <span>Characters per line</span>
-                            <strong>${el.charsPerLine}</strong>
-                        </div>
-                    </div>
-
-                    <div class="issue-box">
-                        <b>Problems</b><br>
-                        ${el.problems.length ? el.problems.join("<br>") : "No problems detected"}
-                    </div>
-
-                    <div class="issue-box">
-                        <b>Recommendations</b><br>
-                        ${el.fixes.length ? el.fixes.join("<br>") : "No changes needed"}
-                    </div>
-
-                    <button class="small-btn" onclick="toggleDetails('${detailsId}')">More details</button>
-
-                    <div id="${detailsId}" class="details">
-                        <b>Why this matters:</b><br>
-                        ${el.details && el.details.length ? el.details.join("<br>") : "This element follows the defined typography rules."}
-
-                        ${previewUrl ? `
-                            <h4>Element preview</h4>
-                            <img class="preview-img" src="${previewUrl}" alt="Element preview">
-                        ` : `
-                            <p><i>Preview is available only for warning and critical elements.</i></p>
-                        `}
-                    </div>
-                </div>
+          <div class="stats">
+            <div class="stat">
+              <b class="good">${view.stats.good}</b><br>
+              Good
             </div>
-        `;
+            <div class="stat">
+              <b class="warning">${view.stats.warnings}</b><br>
+              Warning
+            </div>
+            <div class="stat">
+              <b class="critical">${view.stats.critical}</b><br>
+              Critical
+            </div>
+          </div>
+        </div>
+      `;
     });
 
-    html += `
-        <h2 class="section-title">Visual Highlight</h2>
+    html += `</div>`;
+
+    data.responsive.forEach(view => {
+      html += `
         <div class="panel">
-            <p>Problematic elements are highlighted directly on the analyzed page screenshot.</p>
-            <img class="screenshot" src="${API_URL}/highlight.png?time=${Date.now()}" alt="Highlighted page screenshot">
+          <h2>${view.viewport} detailed analysis</h2>
+      `;
+
+      view.data.slice(0, 10).forEach(el => {
+        html += `
+          <div class="element ${el.level}">
+            <b>${el.tag}</b> — ${el.level.toUpperCase()}<br>
+            <p>${el.text}</p>
+
+            <div class="metrics">
+              <div class="metric">
+                <span>Font size</span>
+                <b>${el.fontSize}px</b>
+              </div>
+              <div class="metric">
+                <span>Line height</span>
+                <b>${el.lineHeight}px</b>
+              </div>
+              <div class="metric">
+                <span>Contrast</span>
+                <b>${el.contrast ?? "N/A"}</b>
+              </div>
+              <div class="metric">
+                <span>Alignment</span>
+                <b>${el.alignment}</b>
+              </div>
+              <div class="metric">
+                <span>Width</span>
+                <b>${el.widthPx}px</b>
+              </div>
+              <div class="metric">
+                <span>Chars / line</span>
+                <b>${el.charsPerLine}</b>
+              </div>
+            </div>
+
+            <b>Problems:</b><br>
+            ${el.problems.length ? el.problems.join("<br>") : "No problems detected"}<br><br>
+
+            <b>Recommendations:</b><br>
+            ${el.fixes.length ? el.fixes.join("<br>") : "No changes needed"}
+          </div>
+        `;
+      });
+
+      html += `
+          <h3>${view.viewport} screenshot</h3>
+          <img class="screenshot" src="${API_URL}/${view.viewport.toLowerCase()}-highlight.png?time=${Date.now()}">
         </div>
-    `;
+      `;
+    });
 
-    document.getElementById("result").innerHTML = html;
-}
+    result.innerHTML = html;
 
-function toggleDetails(id) {
-    const el = document.getElementById(id);
-    if (el) el.classList.toggle("open");
-}
-
-function downloadPDF() {
-    window.print();
+  } catch (error) {
+    result.innerHTML = `<div class="panel"><b>Error:</b> ${error.message}</div>`;
+  }
 }
 </script>
 
