@@ -1,14 +1,30 @@
 const express = require("express");
 const puppeteer = require("puppeteer");
 const cors = require("cors");
+const fs = require("fs");
+const path = require("path");
 
 const app = express();
 app.use(cors());
 app.use(express.static(__dirname));
 
+const previewsDir = path.join(__dirname, "previews");
+
+if (!fs.existsSync(previewsDir)) {
+  fs.mkdirSync(previewsDir);
+}
+
 app.get("/", (req, res) => {
   res.send("Tipografika is running 🚀");
 });
+
+function cleanPreviews() {
+  if (!fs.existsSync(previewsDir)) return;
+
+  fs.readdirSync(previewsDir).forEach(file => {
+    fs.unlinkSync(path.join(previewsDir, file));
+  });
+}
 
 async function analyzeViewport(page, url, viewport) {
   await page.setViewport({
@@ -118,7 +134,6 @@ async function analyzeViewport(page, url, viewport) {
 
     const selector = "h1,h2,h3,h4,h5,h6,p,li,blockquote,a,span,div";
     const nodes = Array.from(document.querySelectorAll(selector));
-
     const data = [];
 
     nodes.forEach((el, index) => {
@@ -134,13 +149,16 @@ async function analyzeViewport(page, url, viewport) {
 
       if (!fontSize || fontSize <= 0) return;
 
+      const id = `${viewportName}-${index}`;
+      el.setAttribute("data-analyzer-id", id);
+
       const lineHeight = getLineHeight(style, fontSize);
       const bg = getBackground(el);
       const contrastValue = contrast(parseRGB(style.color), parseRGB(bg));
       const estimatedChars = charsPerLine(rect.width, fontSize);
 
       const item = {
-        id: `${viewportName}-${index}`,
+        id,
         viewport: viewportName,
         tag,
         text: text.slice(0, 120),
@@ -153,7 +171,8 @@ async function analyzeViewport(page, url, viewport) {
         marginBottom: parseFloat(style.marginBottom) || 0,
         problems: [],
         fixes: [],
-        level: "good"
+        level: "good",
+        preview: null
       };
 
       const lhRatio = lineHeight / fontSize;
@@ -200,6 +219,24 @@ async function analyzeViewport(page, url, viewport) {
         setLevel(item, "warning");
       }
 
+      if (item.level === "good") {
+        el.style.outline = "3px solid #16a34a";
+        el.style.outlineOffset = "3px";
+        el.style.backgroundColor = "rgba(22, 163, 74, 0.08)";
+      }
+
+      if (item.level === "warning") {
+        el.style.outline = "4px solid #f59e0b";
+        el.style.outlineOffset = "3px";
+        el.style.backgroundColor = "rgba(245, 158, 11, 0.12)";
+      }
+
+      if (item.level === "critical") {
+        el.style.outline = "4px solid #dc2626";
+        el.style.outlineOffset = "3px";
+        el.style.backgroundColor = "rgba(220, 38, 38, 0.12)";
+      }
+
       data.push(item);
     });
 
@@ -224,6 +261,37 @@ async function analyzeViewport(page, url, viewport) {
     };
   }, viewport.name);
 
+  for (const item of result.data.slice(0, 40)) {
+    try {
+      const elementHandle = await page.$(`[data-analyzer-id="${item.id}"]`);
+
+      if (elementHandle) {
+        const box = await elementHandle.boundingBox();
+
+        if (box) {
+          const fileName = `${item.id}.png`;
+
+          await page.screenshot({
+            path: path.join(previewsDir, fileName),
+            clip: {
+              x: Math.max(box.x - 20, 0),
+              y: Math.max(box.y - 20, 0),
+              width: Math.min(box.width + 40, viewport.width),
+              height: Math.min(box.height + 40, 600)
+            }
+          });
+
+          item.preview = `/previews/${fileName}`;
+        }
+      }
+    } catch (_) {}
+  }
+
+  await page.screenshot({
+    path: `${viewport.name.toLowerCase()}-highlight.png`,
+    fullPage: true
+  });
+
   return result;
 }
 
@@ -237,6 +305,8 @@ app.get("/analyze", async (req, res) => {
   let browser;
 
   try {
+    cleanPreviews();
+
     browser = await puppeteer.launch({
       headless: "new",
       args: ["--no-sandbox", "--disable-setuid-sandbox"]
@@ -254,12 +324,6 @@ app.get("/analyze", async (req, res) => {
       const page = await browser.newPage();
       const viewportResult = await analyzeViewport(page, url, viewport);
       results.push(viewportResult);
-
-      await page.screenshot({
-        path: `${viewport.name.toLowerCase()}-highlight.png`,
-        fullPage: true
-      });
-
       await page.close();
     }
 
