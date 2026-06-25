@@ -109,18 +109,6 @@ button:hover {
   margin: 12px 0;
 }
 
-.good {
-  color: #15803d;
-}
-
-.warning {
-  color: #d97706;
-}
-
-.critical {
-  color: #dc2626;
-}
-
 .stats {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -134,6 +122,35 @@ button:hover {
   padding: 10px;
   text-align: center;
   border: 1px solid #e5e7eb;
+  cursor: pointer;
+}
+
+.stat:hover {
+  transform: translateY(-2px);
+}
+
+.stat.active {
+  outline: 3px solid #111827;
+}
+
+.good {
+  color: #15803d;
+}
+
+.warning {
+  color: #d97706;
+}
+
+.critical {
+  color: #dc2626;
+}
+
+.category-block {
+  margin-top: 18px;
+  padding: 16px;
+  border-radius: 14px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
 }
 
 .element {
@@ -144,16 +161,16 @@ button:hover {
   padding: 14px;
 }
 
+.element.good {
+  border-left: 6px solid #15803d;
+}
+
 .element.warning {
   border-left: 6px solid #d97706;
 }
 
 .element.critical {
   border-left: 6px solid #dc2626;
-}
-
-.element.good {
-  border-left: 6px solid #15803d;
 }
 
 .metrics {
@@ -176,11 +193,34 @@ button:hover {
   font-size: 12px;
 }
 
+.preview {
+  width: 100%;
+  max-height: 220px;
+  object-fit: contain;
+  border-radius: 12px;
+  border: 2px solid #111827;
+  margin-top: 10px;
+  background: #f9fafb;
+}
+
+.screenshot-wrap {
+  text-align: center;
+}
+
 .screenshot {
   width: 100%;
+  max-width: 760px;
+  max-height: 430px;
+  object-fit: contain;
   border-radius: 12px;
   border: 2px solid #111827;
   margin-top: 12px;
+  background: #f9fafb;
+}
+
+.small-text {
+  color: #6b7280;
+  font-size: 14px;
 }
 
 @media (max-width: 850px) {
@@ -196,6 +236,10 @@ button:hover {
 
   .score-main .number {
     font-size: 44px;
+  }
+
+  .stats {
+    grid-template-columns: 1fr;
   }
 }
 </style>
@@ -224,6 +268,13 @@ button:hover {
 <script>
 const API_URL = "https://web-typography-analyzer-production.up.railway.app";
 
+let appData = null;
+let selectedFilters = {
+  Desktop: "warning",
+  Tablet: "warning",
+  Mobile: "warning"
+};
+
 async function analyze() {
   const url = document.getElementById("urlInput").value.trim();
   const result = document.getElementById("result");
@@ -244,101 +295,147 @@ async function analyze() {
       return;
     }
 
-    let html = `
-      <div class="panel score-main">
-        <h2>Overall Responsive Typography Score</h2>
-        <div class="number">${data.score}/100</div>
-      </div>
-
-      <div class="viewport-grid">
-    `;
-
-    data.responsive.forEach(view => {
-      html += `
-        <div class="viewport-card">
-          <h3>${view.viewport}</h3>
-          <div class="score">${view.score}/100</div>
-
-          <div class="stats">
-            <div class="stat">
-              <b class="good">${view.stats.good}</b><br>
-              Good
-            </div>
-            <div class="stat">
-              <b class="warning">${view.stats.warnings}</b><br>
-              Warning
-            </div>
-            <div class="stat">
-              <b class="critical">${view.stats.critical}</b><br>
-              Critical
-            </div>
-          </div>
-        </div>
-      `;
-    });
-
-    html += `</div>`;
-
-    data.responsive.forEach(view => {
-      html += `
-        <div class="panel">
-          <h2>${view.viewport} detailed analysis</h2>
-      `;
-
-      view.data.slice(0, 10).forEach(el => {
-        html += `
-          <div class="element ${el.level}">
-            <b>${el.tag}</b> — ${el.level.toUpperCase()}<br>
-            <p>${el.text}</p>
-
-            <div class="metrics">
-              <div class="metric">
-                <span>Font size</span>
-                <b>${el.fontSize}px</b>
-              </div>
-              <div class="metric">
-                <span>Line height</span>
-                <b>${el.lineHeight}px</b>
-              </div>
-              <div class="metric">
-                <span>Contrast</span>
-                <b>${el.contrast ?? "N/A"}</b>
-              </div>
-              <div class="metric">
-                <span>Alignment</span>
-                <b>${el.alignment}</b>
-              </div>
-              <div class="metric">
-                <span>Width</span>
-                <b>${el.widthPx}px</b>
-              </div>
-              <div class="metric">
-                <span>Chars / line</span>
-                <b>${el.charsPerLine}</b>
-              </div>
-            </div>
-
-            <b>Problems:</b><br>
-            ${el.problems.length ? el.problems.join("<br>") : "No problems detected"}<br><br>
-
-            <b>Recommendations:</b><br>
-            ${el.fixes.length ? el.fixes.join("<br>") : "No changes needed"}
-          </div>
-        `;
-      });
-
-      html += `
-          <h3>${view.viewport} screenshot</h3>
-          <img class="screenshot" src="${API_URL}/${view.viewport.toLowerCase()}-highlight.png?time=${Date.now()}">
-        </div>
-      `;
-    });
-
-    result.innerHTML = html;
+    appData = data;
+    render();
 
   } catch (error) {
     result.innerHTML = `<div class="panel"><b>Error:</b> ${error.message}</div>`;
   }
+}
+
+function setFilter(viewport, filter) {
+  selectedFilters[viewport] = filter;
+  render();
+}
+
+function renderElements(view) {
+  const filter = selectedFilters[view.viewport] || "warning";
+  const elements = view.data.filter(el => el.level === filter);
+
+  let html = `
+    <div class="category-block">
+      <h3>${filterLabel(filter)} elements (${elements.length})</h3>
+      <p class="small-text">Click Good, Warning or Bad above to show elements from this category.</p>
+  `;
+
+  if (!elements.length) {
+    html += `<p>No elements in this category.</p>`;
+  }
+
+  elements.forEach(el => {
+    const preview = el.preview
+      ? `${API_URL}${el.preview}?time=${Date.now()}`
+      : null;
+
+    html += `
+      <div class="element ${el.level}">
+        <b>${el.tag}</b> — ${filterLabel(el.level)}<br>
+        <p>${el.text}</p>
+
+        <div class="metrics">
+          <div class="metric">
+            <span>Font size</span>
+            <b>${el.fontSize}px</b>
+          </div>
+          <div class="metric">
+            <span>Line height</span>
+            <b>${el.lineHeight}px</b>
+          </div>
+          <div class="metric">
+            <span>Contrast</span>
+            <b>${el.contrast ?? "N/A"}</b>
+          </div>
+          <div class="metric">
+            <span>Alignment</span>
+            <b>${el.alignment}</b>
+          </div>
+          <div class="metric">
+            <span>Width</span>
+            <b>${el.widthPx}px</b>
+          </div>
+          <div class="metric">
+            <span>Chars / line</span>
+            <b>${el.charsPerLine}</b>
+          </div>
+        </div>
+
+        <b>Problems:</b><br>
+        ${el.problems.length ? el.problems.join("<br>") : "No problems detected"}<br><br>
+
+        <b>Recommendations:</b><br>
+        ${el.fixes.length ? el.fixes.join("<br>") : "No changes needed"}
+
+        ${preview ? `
+          <h4>Small element highlight</h4>
+          <img class="preview" src="${preview}" alt="Element preview">
+        ` : ""}
+      </div>
+    `;
+  });
+
+  html += `</div>`;
+  return html;
+}
+
+function filterLabel(level) {
+  if (level === "critical") return "Bad";
+  if (level === "warning") return "Warning";
+  return "Good";
+}
+
+function render() {
+  if (!appData) return;
+
+  let html = `
+    <div class="panel score-main">
+      <h2>Overall Responsive Typography Score</h2>
+      <div class="number">${appData.score}/100</div>
+    </div>
+
+    <div class="viewport-grid">
+  `;
+
+  appData.responsive.forEach(view => {
+    const current = selectedFilters[view.viewport];
+
+    html += `
+      <div class="viewport-card">
+        <h3>${view.viewport}</h3>
+        <div class="score">${view.score}/100</div>
+
+        <div class="stats">
+          <div class="stat ${current === "good" ? "active" : ""}" onclick="setFilter('${view.viewport}', 'good')">
+            <b class="good">${view.stats.good}</b><br>
+            Good
+          </div>
+          <div class="stat ${current === "warning" ? "active" : ""}" onclick="setFilter('${view.viewport}', 'warning')">
+            <b class="warning">${view.stats.warnings}</b><br>
+            Warning
+          </div>
+          <div class="stat ${current === "critical" ? "active" : ""}" onclick="setFilter('${view.viewport}', 'critical')">
+            <b class="critical">${view.stats.critical}</b><br>
+            Bad
+          </div>
+        </div>
+
+        ${renderElements(view)}
+      </div>
+    `;
+  });
+
+  html += `</div>`;
+
+  appData.responsive.forEach(view => {
+    html += `
+      <div class="panel screenshot-wrap">
+        <h2>${view.viewport} overall highlight</h2>
+        <p class="small-text">Reduced full-page screenshot with highlighted typography elements.</p>
+        <img class="screenshot" src="${API_URL}/${view.viewport.toLowerCase()}-highlight.png?time=${Date.now()}">
+      </div>
+    `;
+  });
+
+  document.getElementById("result").innerHTML = html;
 }
 </script>
 
