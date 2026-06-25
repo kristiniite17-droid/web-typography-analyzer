@@ -9,10 +9,7 @@ app.use(cors());
 app.use(express.static(__dirname));
 
 const previewsDir = path.join(__dirname, "previews");
-
-if (!fs.existsSync(previewsDir)) {
-  fs.mkdirSync(previewsDir);
-}
+if (!fs.existsSync(previewsDir)) fs.mkdirSync(previewsDir);
 
 app.get("/", (req, res) => {
   res.send("Tipografika is running 🚀");
@@ -20,10 +17,60 @@ app.get("/", (req, res) => {
 
 function cleanPreviews() {
   if (!fs.existsSync(previewsDir)) return;
-
   fs.readdirSync(previewsDir).forEach(file => {
     fs.unlinkSync(path.join(previewsDir, file));
   });
+}
+
+async function acceptCookies(page) {
+  const texts = [
+    "Accept all", "Accept All", "Accept", "I agree", "Agree", "Allow all",
+    "OK", "Got it", "Piekrītu", "Piekrist", "Apstiprināt", "Akceptēt", "Labi"
+  ];
+
+  for (const text of texts) {
+    try {
+      const clicked = await page.evaluate((text) => {
+        const buttons = Array.from(document.querySelectorAll("button, a, input[type='button'], input[type='submit']"));
+        const btn = buttons.find(el => {
+          const value = (el.innerText || el.value || "").trim().toLowerCase();
+          return value.includes(text.toLowerCase());
+        });
+
+        if (btn) {
+          btn.click();
+          return true;
+        }
+
+        return false;
+      }, text);
+
+      if (clicked) {
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        return true;
+      }
+    } catch (_) {}
+  }
+
+  await page.evaluate(() => {
+    const selectors = [
+      "[id*='cookie']", "[class*='cookie']",
+      "[id*='consent']", "[class*='consent']",
+      "[id*='gdpr']", "[class*='gdpr']",
+      ".cookie-banner", ".cookie-consent",
+      ".cky-consent-container", ".cmplz-cookiebanner"
+    ];
+
+    selectors.forEach(selector => {
+      document.querySelectorAll(selector).forEach(el => {
+        el.style.display = "none";
+        el.style.visibility = "hidden";
+        el.style.opacity = "0";
+      });
+    });
+  });
+
+  return false;
 }
 
 async function analyzeViewport(page, url, viewport) {
@@ -38,6 +85,9 @@ async function analyzeViewport(page, url, viewport) {
     timeout: 45000
   });
 
+  await acceptCookies(page);
+  await new Promise(resolve => setTimeout(resolve, 700));
+
   const result = await page.evaluate((viewportName) => {
     function parseRGB(str) {
       if (!str) return null;
@@ -49,20 +99,15 @@ async function analyzeViewport(page, url, viewport) {
     function getLuminance(r, g, b) {
       const a = [r, g, b].map(v => {
         v /= 255;
-        return v <= 0.03928
-          ? v / 12.92
-          : Math.pow((v + 0.055) / 1.055, 2.4);
+        return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
       });
-
       return 0.2126 * a[0] + 0.7152 * a[1] + 0.0722 * a[2];
     }
 
     function contrast(rgb1, rgb2) {
       if (!rgb1 || !rgb2) return null;
-
       const lum1 = getLuminance(...rgb1);
       const lum2 = getLuminance(...rgb2);
-
       return (Math.max(lum1, lum2) + 0.05) / (Math.min(lum1, lum2) + 0.05);
     }
 
@@ -72,64 +117,37 @@ async function analyzeViewport(page, url, viewport) {
 
     function getBackground(el) {
       let node = el;
-
       while (node && node !== document.documentElement) {
         const bg = getComputedStyle(node).backgroundColor;
-
-        if (
-          bg &&
-          bg !== "transparent" &&
-          bg !== "rgba(0, 0, 0, 0)" &&
-          bg !== "rgba(0,0,0,0)"
-        ) {
-          return bg;
-        }
-
+        if (bg && bg !== "transparent" && bg !== "rgba(0, 0, 0, 0)") return bg;
         node = node.parentElement;
       }
-
       return "rgb(255,255,255)";
     }
 
     function getLineHeight(style, fontSize) {
-      if (!style.lineHeight || style.lineHeight === "normal") {
-        return fontSize * 1.2;
-      }
-
-      if (style.lineHeight.endsWith("px")) {
-        return parseFloat(style.lineHeight);
-      }
-
+      if (!style.lineHeight || style.lineHeight === "normal") return fontSize * 1.2;
+      if (style.lineHeight.endsWith("px")) return parseFloat(style.lineHeight);
       const value = parseFloat(style.lineHeight);
-
-      if (!Number.isNaN(value)) {
-        return value < 10 ? value * fontSize : value;
-      }
-
+      if (!Number.isNaN(value)) return value < 10 ? value * fontSize : value;
       return fontSize * 1.2;
     }
 
     function charsPerLine(width, fontSize) {
-      const avgCharWidth = fontSize * 0.52;
-      return Math.round(width / avgCharWidth);
+      return Math.round(width / (fontSize * 0.52));
     }
 
     function isVisible(style, rect) {
-      return (
-        style.display !== "none" &&
+      return style.display !== "none" &&
         style.visibility !== "hidden" &&
         Number(style.opacity) !== 0 &&
         rect.width > 8 &&
-        rect.height > 8
-      );
+        rect.height > 8;
     }
 
     function setLevel(item, level) {
       const order = { good: 0, warning: 1, critical: 2 };
-
-      if (order[level] > order[item.level]) {
-        item.level = level;
-      }
+      if (order[level] > order[item.level]) item.level = level;
     }
 
     const selector = "h1,h2,h3,h4,h5,h6,p,li,blockquote,a,span,div";
@@ -146,15 +164,13 @@ async function analyzeViewport(page, url, viewport) {
 
       const tag = el.tagName;
       const fontSize = parseFloat(style.fontSize);
-
       if (!fontSize || fontSize <= 0) return;
 
       const id = `${viewportName}-${index}`;
       el.setAttribute("data-analyzer-id", id);
 
       const lineHeight = getLineHeight(style, fontSize);
-      const bg = getBackground(el);
-      const contrastValue = contrast(parseRGB(style.color), parseRGB(bg));
+      const contrastValue = contrast(parseRGB(style.color), parseRGB(getBackground(el)));
       const estimatedChars = charsPerLine(rect.width, fontSize);
 
       const item = {
@@ -222,19 +238,16 @@ async function analyzeViewport(page, url, viewport) {
       if (item.level === "good") {
         el.style.outline = "3px solid #16a34a";
         el.style.outlineOffset = "3px";
-        el.style.backgroundColor = "rgba(22, 163, 74, 0.08)";
       }
 
       if (item.level === "warning") {
         el.style.outline = "4px solid #f59e0b";
         el.style.outlineOffset = "3px";
-        el.style.backgroundColor = "rgba(245, 158, 11, 0.12)";
       }
 
       if (item.level === "critical") {
         el.style.outline = "4px solid #dc2626";
         el.style.outlineOffset = "3px";
-        el.style.backgroundColor = "rgba(220, 38, 38, 0.12)";
       }
 
       data.push(item);
@@ -253,37 +266,30 @@ async function analyzeViewport(page, url, viewport) {
       ? Math.round(((stats.good + stats.warnings * 0.5) / stats.total) * 100)
       : 0;
 
-    return {
-      viewport: viewportName,
-      score,
-      stats,
-      data: finalData
-    };
+    return { viewport: viewportName, score, stats, data: finalData };
   }, viewport.name);
 
-  for (const item of result.data.slice(0, 40)) {
+  for (const item of result.data) {
     try {
       const elementHandle = await page.$(`[data-analyzer-id="${item.id}"]`);
+      if (!elementHandle) continue;
 
-      if (elementHandle) {
-        const box = await elementHandle.boundingBox();
+      const box = await elementHandle.boundingBox();
+      if (!box) continue;
 
-        if (box) {
-          const fileName = `${item.id}.png`;
+      const fileName = `${item.id}.png`;
 
-          await page.screenshot({
-            path: path.join(previewsDir, fileName),
-            clip: {
-              x: Math.max(box.x - 20, 0),
-              y: Math.max(box.y - 20, 0),
-              width: Math.min(box.width + 40, viewport.width),
-              height: Math.min(box.height + 40, 600)
-            }
-          });
-
-          item.preview = `/previews/${fileName}`;
+      await page.screenshot({
+        path: path.join(previewsDir, fileName),
+        clip: {
+          x: Math.max(box.x - 30, 0),
+          y: Math.max(box.y - 30, 0),
+          width: Math.min(box.width + 60, viewport.width),
+          height: Math.min(box.height + 60, 500)
         }
-      }
+      });
+
+      item.preview = `/previews/${fileName}`;
     } catch (_) {}
   }
 
@@ -297,10 +303,7 @@ async function analyzeViewport(page, url, viewport) {
 
 app.get("/analyze", async (req, res) => {
   const url = req.query.url;
-
-  if (!url) {
-    return res.json({ error: "No URL provided." });
-  }
+  if (!url) return res.json({ error: "No URL provided." });
 
   let browser;
 
@@ -333,18 +336,12 @@ app.get("/analyze", async (req, res) => {
       results.reduce((sum, item) => sum + item.score, 0) / results.length
     );
 
-    res.json({
-      score: overallScore,
-      responsive: results
-    });
+    res.json({ score: overallScore, responsive: results });
 
   } catch (err) {
     if (browser) {
-      try {
-        await browser.close();
-      } catch (_) {}
+      try { await browser.close(); } catch (_) {}
     }
-
     res.json({ error: err.message });
   }
 });
