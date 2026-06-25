@@ -14,291 +14,99 @@ if (!fs.existsSync(previewsDir)) {
   fs.mkdirSync(previewsDir);
 }
 
-function delay(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
 app.get("/", (req, res) => {
   res.send("Tipografika is running 🚀");
 });
 
-async function handleCookieConsent(page) {
+async function handleCookieBanner(page) {
   const acceptTexts = [
-    "accept all",
-    "accept all cookies",
-    "accept cookies",
-    "accept",
-    "allow all",
-    "allow all cookies",
-    "allow cookies",
-    "agree",
-    "i agree",
-    "yes, i agree",
-    "ok",
-    "okay",
-    "got it",
-    "continue",
-    "confirm",
-    "save and close",
-    "accept selected",
-    "piekrītu",
-    "piekrist",
-    "piekrist visam",
-    "apstiprināt",
-    "akceptēt",
-    "atļaut visus",
-    "atļaut",
-    "labi",
-    "saprotu",
-    "принять",
-    "принять все",
-    "согласен",
-    "согласиться",
-    "разрешить все"
+    "Accept",
+    "Accept all",
+    "Accept All",
+    "Accept cookies",
+    "Allow all",
+    "Allow cookies",
+    "I agree",
+    "Agree",
+    "OK",
+    "Got it",
+    "Continue",
+    "Piekrītu",
+    "Piekrist",
+    "Apstiprināt",
+    "Akceptēt",
+    "Labi",
+    "Saprotu",
+    "Принять",
+    "Согласен",
+    "Разрешить"
   ];
 
-  const rejectOrInfoTexts = [
-    "privacy policy",
-    "cookie policy",
-    "learn more",
-    "more information",
-    "settings",
-    "preferences",
-    "manage options",
-    "customize",
-    "details",
-    "read more",
-    "privātuma politika",
-    "sīkdatņu politika",
-    "iestatījumi",
-    "подробнее",
-    "настройки"
-  ];
-
-  const preferredSelectors = [
-    "#onetrust-accept-btn-handler",
-    "button#onetrust-accept-btn-handler",
-    "#CybotCookiebotDialogBodyLevelButtonLevelOptinAllowAll",
-    "button#CybotCookiebotDialogBodyLevelButtonLevelOptinAllowAll",
-    "button[data-testid='uc-accept-all-button']",
-    "button[data-testid*='accept']",
-    "button[id*='accept']",
-    "button[class*='accept']",
-    "a[id*='accept']",
-    "a[class*='accept']",
-    ".cky-btn-accept",
-    ".cky-btn-accept-all",
-    ".cmplz-accept",
-    ".cc-allow",
-    ".cc-accept",
-    ".cookie-accept",
-    ".cookie-button-accept",
-    "#cookie_action_close_header",
-    "#cookie-law-info-bar button",
-    "button[aria-label*='Accept']",
-    "button[aria-label*='accept']"
-  ];
-
-  async function clickConsentInFrame(frame) {
+  for (const text of acceptTexts) {
     try {
-      return await frame.evaluate(({ acceptTexts, rejectOrInfoTexts, preferredSelectors }) => {
-        function normalize(text) {
-          return (text || "")
-            .replace(/\s+/g, " ")
-            .trim()
-            .toLowerCase();
-        }
+      const clicked = await page.evaluate((text) => {
+        const elements = Array.from(
+          document.querySelectorAll(
+            "button, a, input[type='button'], input[type='submit']"
+          )
+        );
 
-        function isVisible(el) {
-          const style = window.getComputedStyle(el);
-          const rect = el.getBoundingClientRect();
-          return (
-            style.display !== "none" &&
-            style.visibility !== "hidden" &&
-            Number(style.opacity) !== 0 &&
-            rect.width > 5 &&
-            rect.height > 5
-          );
-        }
+        const target = elements.find((el) => {
+          const value = (el.innerText || el.value || "").trim().toLowerCase();
+          return value === text.toLowerCase() || value.includes(text.toLowerCase());
+        });
 
-        function safeClick(el) {
-          try {
-            el.scrollIntoView({ block: "center", inline: "center" });
-          } catch (_) {}
-          el.click();
+        if (target) {
+          target.click();
           return true;
         }
 
-        for (const selector of preferredSelectors) {
-          const matches = Array.from(document.querySelectorAll(selector)).filter(isVisible);
-          if (matches.length) return safeClick(matches[0]);
-        }
-
-        const clickable = Array.from(document.querySelectorAll(
-          "button, a, input[type='button'], input[type='submit'], [role='button'], div[tabindex], span[tabindex]"
-        )).filter(isVisible);
-
-        const target = clickable.find((el) => {
-          const text = normalize(
-            el.innerText ||
-            el.textContent ||
-            el.value ||
-            el.getAttribute("aria-label") ||
-            el.getAttribute("title") ||
-            ""
-          );
-
-          if (!text) return false;
-          if (rejectOrInfoTexts.some((bad) => text.includes(bad))) return false;
-
-          return acceptTexts.some((good) => text === good || text.includes(good));
-        });
-
-        if (target) return safeClick(target);
         return false;
-      }, { acceptTexts, rejectOrInfoTexts, preferredSelectors });
-    } catch (_) {
-      return false;
-    }
-  }
+      }, text);
 
-  async function removeConsentOverlays() {
-    try {
-      await page.evaluate(() => {
-        const keywords = [
-          "cookie",
-          "cookies",
-          "consent",
-          "gdpr",
-          "privacy",
-          "privātuma",
-          "sīkdat",
-          "sikdat",
-          "cookiebot",
-          "onetrust",
-          "trustarc",
-          "usercentrics",
-          "didomi",
-          "quantcast",
-          "osano",
-          "termly",
-          "iubenda",
-          "cmp",
-          "cmplz",
-          "cky",
-          "klaro"
-        ];
-
-        const directSelectors = [
-          "#onetrust-banner-sdk",
-          "#onetrust-consent-sdk",
-          ".onetrust-pc-dark-filter",
-          "#CybotCookiebotDialog",
-          "#CookiebotWidget",
-          "#cookiescript_injected",
-          ".cky-consent-container",
-          ".cky-overlay",
-          ".cmplz-cookiebanner",
-          ".cmplz-soft-cookiewall",
-          ".cc-window",
-          ".cc-banner",
-          ".cookie-banner",
-          ".cookie-consent",
-          ".cookies",
-          "#cookieNotice",
-          "#cookieConsent",
-          "#cookie-law-info-bar",
-          ".cli-modal-backdrop",
-          ".cli-bar-container",
-          "[id*='cookie']",
-          "[class*='cookie']",
-          "[id*='Cookie']",
-          "[class*='Cookie']",
-          "[id*='consent']",
-          "[class*='consent']",
-          "[id*='Consent']",
-          "[class*='Consent']",
-          "[id*='gdpr']",
-          "[class*='gdpr']"
-        ];
-
-        function normalize(value) {
-          if (typeof value === "string") return value.toLowerCase();
-          return "";
-        }
-
-        function hasCookieText(el) {
-          const text = normalize(el.innerText || el.textContent || "");
-          const id = normalize(el.id || "");
-          const className = normalize(typeof el.className === "string" ? el.className : "");
-          const aria = normalize(el.getAttribute && el.getAttribute("aria-label"));
-          const all = `${text} ${id} ${className} ${aria}`;
-          return keywords.some((k) => all.includes(k));
-        }
-
-        function removeElement(el) {
-          try {
-            el.remove();
-          } catch (_) {
-            try {
-              el.style.display = "none";
-              el.style.visibility = "hidden";
-              el.style.opacity = "0";
-              el.style.pointerEvents = "none";
-            } catch (_) {}
-          }
-        }
-
-        directSelectors.forEach((selector) => {
-          document.querySelectorAll(selector).forEach((el) => {
-            if (hasCookieText(el) || selector.toLowerCase().includes("cookie") || selector.toLowerCase().includes("consent")) {
-              removeElement(el);
-            }
-          });
-        });
-
-        Array.from(document.querySelectorAll("body *")).forEach((el) => {
-          const style = window.getComputedStyle(el);
-          const rect = el.getBoundingClientRect();
-          const z = Number.parseInt(style.zIndex, 10) || 0;
-
-          const isOverlay = style.position === "fixed" || style.position === "sticky" || z >= 1000;
-          const isLargeEnough = rect.width > window.innerWidth * 0.2 && rect.height > 35;
-          const touchesViewport = rect.bottom > 0 && rect.top < window.innerHeight;
-
-          if (isOverlay && isLargeEnough && touchesViewport && hasCookieText(el)) {
-            removeElement(el);
-          }
-        });
-
-        Array.from(document.querySelectorAll("[class*='overlay'], [class*='modal'], [class*='backdrop'], [id*='overlay'], [id*='modal'], [id*='backdrop']")).forEach((el) => {
-          const style = window.getComputedStyle(el);
-          if (hasCookieText(el) || style.position === "fixed") {
-            removeElement(el);
-          }
-        });
-
-        document.body.style.overflow = "auto";
-        document.documentElement.style.overflow = "auto";
-      });
+      if (clicked) {
+        await new Promise(resolve => setTimeout(resolve, 1200));
+        return true;
+      }
     } catch (_) {}
   }
 
-  // Consent banners often appear slightly after page load, so do several passes.
-  for (let pass = 0; pass < 4; pass++) {
-    let clicked = await clickConsentInFrame(page.mainFrame());
+  try {
+    await page.evaluate(() => {
+      const selectors = [
+        "[id*='cookie']",
+        "[class*='cookie']",
+        "[id*='Cookie']",
+        "[class*='Cookie']",
+        "[id*='consent']",
+        "[class*='consent']",
+        "[id*='Consent']",
+        "[class*='Consent']",
+        "[id*='gdpr']",
+        "[class*='gdpr']",
+        ".cc-window",
+        ".cookie-banner",
+        ".cookie-consent",
+        ".cookies",
+        "#cookieNotice",
+        "#cookieConsent",
+        "#cookiescript_injected",
+        ".cky-consent-container",
+        ".cmplz-cookiebanner"
+      ];
 
-    if (!clicked) {
-      for (const frame of page.frames()) {
-        clicked = await clickConsentInFrame(frame);
-        if (clicked) break;
-      }
-    }
+      selectors.forEach((selector) => {
+        document.querySelectorAll(selector).forEach((el) => {
+          el.style.display = "none";
+          el.style.visibility = "hidden";
+          el.style.opacity = "0";
+          el.style.pointerEvents = "none";
+        });
+      });
+    });
+  } catch (_) {}
 
-    if (clicked) await delay(1200);
-    await removeConsentOverlays();
-    await delay(500);
-  }
+  return false;
 }
 
 app.get("/analyze", async (req, res) => {
@@ -317,12 +125,7 @@ app.get("/analyze", async (req, res) => {
 
     browser = await puppeteer.launch({
       headless: "new",
-      args: [
-        "--no-sandbox",
-        "--disable-setuid-sandbox",
-        "--disable-dev-shm-usage",
-        "--disable-features=site-per-process"
-      ]
+      args: ["--no-sandbox", "--disable-setuid-sandbox"]
     });
 
     const page = await browser.newPage();
@@ -332,16 +135,13 @@ app.get("/analyze", async (req, res) => {
       height: 2200
     });
 
-    await page.setExtraHTTPHeaders({
-      "Accept-Language": "en-US,en;q=0.9,lv;q=0.8,ru;q=0.7"
-    });
-
     await page.goto(url, {
       waitUntil: "networkidle2",
       timeout: 45000
     });
 
-    await handleCookieConsent(page);
+    await handleCookieBanner(page);
+    await new Promise(resolve => setTimeout(resolve, 1000));
 
     const result = await page.evaluate(() => {
       function parseRGB(str) {
@@ -655,8 +455,6 @@ app.get("/analyze", async (req, res) => {
       };
     });
 
-    await handleCookieConsent(page);
-
     for (const item of result.data.filter((i) => i.level !== "good").slice(0, 20)) {
       try {
         const elementHandle = await page.$(`[data-analyzer-id="${item.id}"]`);
@@ -684,8 +482,6 @@ app.get("/analyze", async (req, res) => {
         }
       } catch (_) {}
     }
-
-    await handleCookieConsent(page);
 
     await page.screenshot({
       path: "highlight.png",
